@@ -1,0 +1,12 @@
+{
+  "name": "rw-fullstack",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "client": "cd client && npm run dev",
+    "server": "node server/index.js",
+    "dev": "start /B node server/index.js && cd client && npm run dev",
+    "build": "npm install && npm install --prefix client && npm install --prefix server && npm run build --prefix client",
+    "start": "node server/index.js"
+  }
+}

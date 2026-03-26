@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  /* Colors */
+  --bg-dark-900: #080808;
+  --bg-dark-800: #121212;
+  --bg-dark-700: #1a1a1a;
+  --bg-dark-600: #242424;
+  
+  --primary-green: #00ff88;
+  --primary-green-dark: #00c853;
+  --primary-green-soft: #b2ffda;
+  
+  --text-main: #f0f0f0;
+  --text-muted: #a0a0a0;
+  --text-dim: #707070;
+  
+  --danger: #ff4d4d;
+  --warning: #ffcc00;
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  
+  /* Utils */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --font-main: 'Inter', system-ui, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  min-height: 100vh;
+  background-color: var(--bg-dark-900);
+  color: var(--text-main);
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark-900);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-dark-700);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-dark-600);
+}
