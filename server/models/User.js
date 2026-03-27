@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true },
   phone: { type: String, required: true },
   password: { type: String, required: true, select: false },
-  referralCode: { type: String, unique: true }, // The user's own referral code
+  referralCode: { type: String, unique: true, sparse: true }, // The user's own referral code
   referredBy: { type: String }, // The referral code they used to sign up
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
 }, { timestamps: true });

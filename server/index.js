@@ -38,13 +38,13 @@ app.use('/api/admin', adminRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'OK' }));
 
-// Serve static files from the React client app
-const clientPath = path.join(__dirname, '../client/dist');
+// Serve static files from the root dist folder (created during build)
+const clientPath = path.join(__dirname, '../dist');
 app.use(express.static(clientPath));
 
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
-app.get(/.*/, (req, res) => {
+app.get('*', (req, res) => {
   res.sendFile(path.join(clientPath, 'index.html'));
 });
 

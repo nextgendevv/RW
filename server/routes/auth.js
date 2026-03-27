@@ -11,20 +11,24 @@ router.post('/register', async (req, res) => {
   const { firstName, lastName, email, phone, password, confirmPassword, referralCode } = req.body;
 
   if (!firstName || !email || !phone || !password) {
+    console.log('REGISTER_FAIL: Missing required fields');
     return res.status(400).json({ message: 'Please enter all required fields.' });
   }
 
   if (password.length < 6) {
+    console.log('REGISTER_FAIL: Password too short');
     return res.status(400).json({ message: 'Password must be at least 6 characters.' });
   }
 
   if (password !== confirmPassword) {
+    console.log('REGISTER_FAIL: Passwords do not match');
     return res.status(400).json({ message: 'Passwords do not match.' });
   }
 
   try {
     let user = await User.findOne({ email });
     if (user) {
+      console.log(`REGISTER_FAIL: Email already exists: ${email}`);
       return res.status(400).json({ message: 'An account with this email already exists.' });
     }
 
@@ -38,6 +42,7 @@ router.post('/register', async (req, res) => {
     });
 
     await user.save();
+    console.log(`REGISTER_SUCCESS: User created: ${email}`);
 
     const payload = { user: { id: user.id } };
 
@@ -57,17 +62,20 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
+    console.log('LOGIN_FAIL: Missing email or password');
     return res.status(400).json({ message: 'Please provide email and password.' });
   }
 
   try {
     let user = await User.findOne({ email }).select('+password');
     if (!user) {
+      console.log(`LOGIN_FAIL: User not found for email: ${email}`);
       return res.status(400).json({ message: 'Invalid email or password.' });
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      console.log(`LOGIN_FAIL: Password mismatch for user: ${email}`);
       return res.status(400).json({ message: 'Invalid email or password.' });
     }
 
@@ -75,6 +83,7 @@ router.post('/login', async (req, res) => {
 
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' }, (err, token) => {
       if (err) throw err;
+      console.log(`LOGIN_SUCCESS: User logged in: ${email}`);
       res.json({ token });
     });
   } catch (err) {
