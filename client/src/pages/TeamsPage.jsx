@@ -1,17 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: '/api',
-});
-
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import api from '../api';
 
 export default function TeamsPage() {
   const [data, setData] = useState(null);

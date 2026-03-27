@@ -13,7 +13,8 @@ const PORT = process.env.PORT || 3001;
 // CORS configuration - Allow local dev and same-origin
 const allowedOrigins = [
   'http://localhost:5173',
-  'http://localhost:3001'
+  'http://localhost:3001',
+  'https://rw-ghhg.onrender.com'
 ];
 
 app.use(cors({
