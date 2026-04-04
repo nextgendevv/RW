@@ -6,9 +6,17 @@ require('./db');
 const authRoutes = require('./routes/auth');
 const teamRoutes = require('./routes/teams');
 const adminRoutes = require('./routes/admin');
+const compression = require('compression');
+const helmet = require('helmet');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Production Optimizations
+app.use(helmet({
+  contentSecurityPolicy: false, // Let React handle CSP if needed
+}));
+app.use(compression());
 
 // CORS configuration - Allow local dev and same-origin
 const allowedOrigins = [

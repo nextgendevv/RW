@@ -6,9 +6,13 @@ import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
 import TeamsPage from './pages/TeamsPage';
 import AdminPage from './pages/AdminPage';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import UserManagement from './pages/admin/UserManagement';
+import AdminLoginPage from './pages/admin/AdminLoginPage';
 import HomePage from './pages/HomePage';
 import './App.css';
 import ProtectedLayout from './layouts/ProtectedLayout';
+import AdminLayout from './layouts/AdminLayout';
 
 function AdminRoute({ children }) {
   const { user, loading } = useAuth();
@@ -59,11 +63,16 @@ export default function App() {
         <Routes>
           <Route path="/" element={<RootRedirect />} />
           <Route path="/auth" element={<AuthPageWithRef />} />
+          <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="teams" element={<TeamsPage />} />
-            <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+          </Route>
+          <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="users" element={<UserManagement />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

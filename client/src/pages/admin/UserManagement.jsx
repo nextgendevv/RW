@@ -1,28 +1,23 @@
 import { useState, useEffect } from 'react';
-import api from '../api';
-import './AdminPage.css';
+import api from '../../api';
+import '../AdminPage.css';
 
-export default function AdminPage() {
+export default function UserManagement() {
   const [users, setUsers] = useState([]);
-  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchUsers = async () => {
       try {
-        const [usersRes, statsRes] = await Promise.all([
-          api.get('/admin/users'),
-          api.get('/admin/stats')
-        ]);
+        const usersRes = await api.get('/admin/users');
         setUsers(usersRes.data);
-        setStats(statsRes.data);
       } catch (err) {
-        console.error('Failed to fetch admin data', err);
+        console.error('Failed to fetch admin users', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    fetchUsers();
   }, []);
 
   const handleUpgradeToPremium = async (userId) => {
@@ -40,38 +35,14 @@ export default function AdminPage() {
   return (
     <div className="admin-container">
       <div className="admin-header">
-        <h1 className="gradient-text">Admin Dashboard</h1>
+        <h1 className="gradient-text" style={{ background: 'linear-gradient(135deg, #ef4444 0%, #991b1b 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>User Management</h1>
         <p>Monitor system activity and manage users across the network</p>
-      </div>
-
-      <div className="stats-overview">
-        <div className="stat-card glass-card">
-          <span className="stat-label">Total Users</span>
-          <span className="stat-value">{stats?.totalUsers || 0}</span>
-          <div className="stat-status positive">+ {stats?.newUsersLast7Days || 0} this week</div>
-        </div>
-        <div className="stat-card glass-card">
-          <span className="stat-label">Active Roles</span>
-          <div className="role-distribution">
-            {stats?.roleStats.map(role => (
-              <div key={role._id} className="role-item">
-                <span className="role-name">{role._id}</span>
-                <span className="role-count">{role.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="stat-card glass-card">
-          <span className="stat-label">System Health</span>
-          <span className="stat-value">Optimal</span>
-          <div className="pulse-indicator" />
-        </div>
       </div>
 
       <div className="user-management-section glass-card">
         <div className="section-header">
           <h2>User Management</h2>
-          <span className="badge">{users.length} Users</span>
+          <span className="badge" style={{ background: 'linear-gradient(135deg, #ef4444 0%, #991b1b 100%)' }}>{users.length} Users</span>
         </div>
         
         <div className="table-wrapper">
@@ -91,7 +62,7 @@ export default function AdminPage() {
                 <tr key={u._id}>
                   <td>
                     <div className="user-info">
-                      <div className="avatar">{u.firstName[0]}</div>
+                      <div className="avatar" style={{ background: 'linear-gradient(135deg, #ef4444 0%, #991b1b 100%)' }}>{u.firstName[0]}</div>
                       <div>
                         <div className="name">{u.firstName} {u.lastName}</div>
                         <div className="id">ID: {u._id.substring(18)}</div>

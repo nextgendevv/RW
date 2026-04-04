@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   referralCode: { type: String, unique: true, sparse: true }, // The user's own referral code
   referredBy: { type: String }, // The referral code they used to sign up
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  subscription: { type: Boolean, default: false },
 }, { timestamps: true });
 
 // Generate a random 8-character referral code

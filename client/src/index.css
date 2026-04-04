@@ -18,6 +18,12 @@
   --danger: #ff4d4d;
   --warning: #ffcc00;
   
+  --admin-primary: #d4af37; /* Gold */
+  --admin-primary-dark: #1a1a1a; /* Black */
+  --admin-gradient: linear-gradient(135deg, #d4af37 0%, #aa8b26 100%);
+  --admin-accent-soft: rgba(212, 175, 55, 0.08);
+  --admin-bg: #0a0a0a;
+  
   /* Glassmorphism */
   --glass-bg: rgba(255, 255, 255, 0.04);
   --glass-border: rgba(255, 255, 255, 0.08);
