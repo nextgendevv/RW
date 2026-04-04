@@ -99,6 +99,16 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {user.subscription && (
+              <div style={{ backgroundColor: '#1DB954', padding: '10px', borderRadius: '5px', marginTop: '20px' }}>
+                <p>👑 **NetX Pro Benefit Active!**</p>
+                <p>You can watch movies on **NetX** for free with this email.</p>
+                <button onClick={() => window.location.href='https://netx-1.onrender.com'}>
+                    Go to NetX Now
+                </button>
+              </div>
+            )}
+
             <div className="identity-actions">
               <button className="btn-secondary" onClick={startEdit}>Edit Profile</button>
               <button className="btn-logout-minimal" onClick={handleLogout}>Sign Out</button>
