@@ -99,15 +99,43 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {user.subscription && (
-              <div style={{ backgroundColor: '#1DB954', padding: '10px', borderRadius: '5px', marginTop: '20px' }}>
-                <p>👑 **NetX Pro Benefit Active!**</p>
-                <p>You can watch movies on **NetX** for free with this email.</p>
-                <button onClick={() => window.location.href='https://netx-1.onrender.com'}>
-                    Go to NetX Now
-                </button>
+            <div className="glass-card premium-panel" style={{ marginTop: '24px', padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                <div style={{ fontSize: '2rem' }}>🎬</div>
+                <div>
+                   <h3 style={{ margin: 0, color: 'var(--primary-green)' }}>NetX Streaming Access</h3>
+                   <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>Included with your account</span>
+                </div>
               </div>
-            )}
+              <p style={{ fontSize: '0.9rem', marginBottom: '20px' }}>
+                Watch premium movies and TV shows on our partner streaming platform, NetX. Activating generates an account with your current email!
+              </p>
+              <button 
+                className="btn-primary" 
+                style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}
+                onClick={async () => {
+                  try {
+                     const api = (await import('../api')).default;
+                     setSaving(true);
+                     setSaveMsg('Syncing account to NetX...');
+                     const response = await api.post('/streaming/sync-access');
+                     if (response.data.success) {
+                        setSaveMsg('Success! Redirecting...');
+                        window.location.href = response.data.redirectUrl || 'https://netx-1.onrender.com';
+                     }
+                  } catch (err) {
+                     console.error('Failed to sync to streaming', err);
+                     setSaveMsg('Failed to fetch streaming access. Ensure backend tokens are configured.');
+                     setTimeout(() => setSaveMsg(''), 4000);
+                  } finally {
+                     setSaving(false);
+                  }
+                }}
+              >
+                Activate & Go to NetX 
+              </button>
+              {saveMsg && <div className="form-feedback" style={{marginTop: '15px'}}>{saveMsg}</div>}
+            </div>
 
             <div className="identity-actions">
               <button className="btn-secondary" onClick={startEdit}>Edit Profile</button>

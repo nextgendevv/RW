@@ -13,29 +13,60 @@ router.get('/', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'User or referral code not found' });
     }
 
-    // Level 1: Direct referrals
-    const level1 = await User.find({ referredBy: currentUser.referralCode }).select('-password');
-    const level1Codes = level1.map(u => u.referralCode);
+    // We will fetch up to 10 levels
+    const maxLevels = 10;
+    const levels = {};
+    const summary = {};
+    let totalItems = 0;
+    
+    // Create base response structure
+    for (let i = 1; i <= maxLevels; i++) {
+        levels[`level${i}`] = [];
+        summary[`level${i}Count`] = 0;
+    }
 
-    // Level 2: Referrals from Level 1
-    const level2 = await User.find({ referredBy: { $in: level1Codes } }).select('-password');
-    const level2Codes = level2.map(u => u.referralCode);
+    let currentLevelUsers = await User.find({ referredBy: currentUser.referralCode }).select('-password');
+    levels['level1'] = currentLevelUsers;
+    summary['level1Count'] = currentLevelUsers.length;
+    totalItems += currentLevelUsers.length;
 
-    // Level 3: Referrals from Level 2
-    const level3 = await User.find({ referredBy: { $in: level2Codes } }).select('-password');
+    let currentLevelCodes = currentLevelUsers.map(u => u.referralCode);
+
+    for (let i = 2; i <= maxLevels; i++) {
+      if (currentLevelCodes.length === 0) {
+        break; // Stop fetching if current level has no users
+      }
+      const nextLevelUsers = await User.find({ referredBy: { $in: currentLevelCodes } }).select('-password');
+      levels[`level${i}`] = nextLevelUsers;
+      summary[`level${i}Count`] = nextLevelUsers.length;
+      totalItems += nextLevelUsers.length;
+      
+      currentLevelCodes = nextLevelUsers.map(u => u.referralCode).filter(Boolean);
+    }
+    
+    summary.totalItems = totalItems;
+
+    // Helper to build a nested tree
+    const buildTree = (referralCode, currentLevel) => {
+        if (currentLevel > maxLevels) return [];
+        const usersInNextLevel = levels[`level${currentLevel}`] || [];
+        const directChildren = usersInNextLevel.filter(u => u.referredBy === referralCode);
+        
+        return directChildren.map(child => {
+             return {
+                 ...child.toObject(),
+                 level: currentLevel,
+                 children: buildTree(child.referralCode, currentLevel + 1)
+             };
+        });
+    };
+
+    const tree = buildTree(currentUser.referralCode, 1);
 
     res.json({
-      summary: {
-        totalItems: level1.length + level2.length + level3.length,
-        level1Count: level1.length,
-        level2Count: level2.length,
-        level3Count: level3.length,
-      },
-      levels: {
-        level1,
-        level2,
-        level3
-      }
+      summary,
+      levels,
+      tree
     });
   } catch (err) {
     console.error('TEAMS_ERROR:', err);

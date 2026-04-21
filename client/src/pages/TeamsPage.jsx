@@ -1,10 +1,43 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
 
+const TreeNode = ({ node, isLastChild, currentGain }) => {
+  return (
+    <div className={`tree-node ${isLastChild ? 'last-child' : ''}`}>
+      <div className="tree-content">
+        <div className="tree-user-info">
+          <div className="tree-user-avatar">{node.firstName[0]}</div>
+          <div className="tree-user-details">
+            <h4>{node.firstName} {node.lastName}</h4>
+            <span>Level {node.level} • {new Date(node.createdAt).toLocaleDateString()}</span>
+          </div>
+        </div>
+        <div className="tree-gain">Gain: ₹{currentGain}</div>
+      </div>
+      
+      {node.children && node.children.length > 0 && (
+        <div className="tree-node-children">
+          {node.children.map((child, index) => {
+            // Mock gain calculation based on level
+            const nextGain = Math.max(10 - child.level, 1);
+            return (
+              <TreeNode 
+                key={child._id} 
+                node={child} 
+                isLastChild={index === node.children.length - 1}
+                currentGain={nextGain}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function TeamsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeLevel, setActiveLevel] = useState('level1');
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -22,91 +55,71 @@ export default function TeamsPage() {
 
   if (loading) return <div className="loading-screen"><div className="loading-spinner" /></div>;
 
-  const currentLevelUsers = data?.levels[activeLevel] || [];
+  const treeData = data?.tree || [];
+  
+  // Create summary cards up to 10 dynamically, but we'll only show levels that are populated
+  const populatedLevels = [];
+  for (let i = 1; i <= 10; i++) {
+    const count = data?.summary[`level${i}Count`];
+    if (count !== undefined) {
+      populatedLevels.push({ level: i, count });
+    }
+  }
+
+  // Calculate total network earning in UI directly for wow factor based on our mock logic
+  // Recurse over tree
+  const calculateTotalMockGain = (nodes) => {
+    let total = 0;
+    const recurse = (list) => {
+      for (const n of list) {
+        total += Math.max(10 - n.level, 1);
+        if (n.children) recurse(n.children);
+      }
+    };
+    recurse(nodes);
+    return total;
+  };
+
+  const totalGain = calculateTotalMockGain(treeData);
 
   return (
     <div className="teams-container">
       <div className="teams-header">
-        <h1 className="gradient-text">My Network</h1>
-        <p>Monitor and manage your multi-level recruitment tree</p>
+        <h1 className="gradient-text">My Network Tree</h1>
+        <p>Monitor your 10-level recruitment tree and referral gains</p>
       </div>
 
-      <div className="level-summary-grid">
-        <div 
-          className={`glass-card level-card ${activeLevel === 'level1' ? 'active' : ''}`}
-          onClick={() => setActiveLevel('level1')}
-        >
-          <div className="level-badge">Level 1</div>
-          <div className="level-count">{data?.summary.level1Count || 0}</div>
-          <div className="level-label">Direct Referrals</div>
-          <div className="level-indicator" />
-        </div>
-
-        <div 
-          className={`glass-card level-card ${activeLevel === 'level2' ? 'active' : ''}`}
-          onClick={() => setActiveLevel('level2')}
-        >
-          <div className="level-badge">Level 2</div>
-          <div className="level-count">{data?.summary.level2Count || 0}</div>
-          <div className="level-label">Indirect Referrals</div>
-          <div className="level-indicator" />
-        </div>
-
-        <div 
-          className={`glass-card level-card ${activeLevel === 'level3' ? 'active' : ''}`}
-          onClick={() => setActiveLevel('level3')}
-        >
-          <div className="level-badge">Level 3</div>
-          <div className="level-count">{data?.summary.level3Count || 0}</div>
-          <div className="level-label">Extended Network</div>
-          <div className="level-indicator" />
+      <div className="glass-card table-section" style={{ padding: '32px', marginBottom: '40px' }}>
+        <h3 style={{ marginBottom: '20px' }}>Network Performance</h3>
+        <div style={{ display: 'flex', gap: '32px', flexWrap: 'wrap' }}>
+          <div className="mini-stat">
+            <span className="label">Total Members</span>
+            <span className="value gradient-text" style={{ fontSize: '2rem' }}>{data?.summary.totalItems || 0}</span>
+          </div>
+          <div className="mini-stat">
+            <span className="label">Total Estimated Gain</span>
+            <span className="value" style={{ fontSize: '2rem', color: '#00ff88' }}>₹{totalGain}</span>
+          </div>
         </div>
       </div>
 
-      <div className="glass-card table-section">
-        <div className="table-header">
-          <h3>
-            {activeLevel === 'level1' && 'Direct Recruits'}
-            {activeLevel === 'level2' && 'Level 2 Partners'}
-            {activeLevel === 'level3' && 'Level 3 Network'}
-          </h3>
-          <span className="user-count">{currentLevelUsers.length} total users</span>
-        </div>
-
-        <div className="table-responsive">
-          <table className="teams-table">
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Email</th>
-                <th>Joined Date</th>
-                <th>Code</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentLevelUsers.length > 0 ? (
-                currentLevelUsers.map((u) => (
-                  <tr key={u._id}>
-                    <td>
-                      <div className="user-cell">
-                        <div className="mini-avatar">{u.firstName[0]}</div>
-                        <span>{u.firstName} {u.lastName}</span>
-                      </div>
-                    </td>
-                    <td>{u.email}</td>
-                    <td>{new Date(u.createdAt).toLocaleDateString()}</td>
-                    <td><span className="table-code">{u.referralCode}</span></td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="empty-state">
-                    No users found in this level yet. Share your link to grow your team!
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      <div className="tree-container">
+        <div className="tree-root">
+          <h3 style={{ marginBottom: '24px', color: 'var(--primary-green)' }}>Referral Tree Layout</h3>
+          {treeData.length > 0 ? (
+            treeData.map((node, i) => (
+              <TreeNode 
+                key={node._id} 
+                node={node} 
+                isLastChild={i === treeData.length - 1} 
+                currentGain={Math.max(10 - node.level, 1)} 
+              />
+            ))
+          ) : (
+            <div className="empty-state">
+              No network tree found. Start recruiting to build your tree!
+            </div>
+          )}
         </div>
       </div>
     </div>

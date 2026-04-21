@@ -6,6 +6,7 @@ require('./db');
 const authRoutes = require('./routes/auth');
 const teamRoutes = require('./routes/teams');
 const adminRoutes = require('./routes/admin');
+const streamingRoutes = require('./routes/streaming');
 const compression = require('compression');
 const helmet = require('helmet');
 
@@ -43,6 +44,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/streaming', streamingRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'OK' }));
 
