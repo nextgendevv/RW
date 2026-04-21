@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const teamRoutes = require('./routes/teams');
 const adminRoutes = require('./routes/admin');
 const streamingRoutes = require('./routes/streaming');
+const walletRoutes = require('./routes/wallet');
 const compression = require('compression');
 const helmet = require('helmet');
 
@@ -45,6 +46,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/streaming', streamingRoutes);
+app.use('/api/wallet', walletRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'OK' }));
 

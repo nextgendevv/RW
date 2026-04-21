@@ -12,20 +12,18 @@ const TreeNode = ({ node, isLastChild, currentGain }) => {
             <span>Level {node.level} • {new Date(node.createdAt).toLocaleDateString()}</span>
           </div>
         </div>
-        <div className="tree-gain">Gain: ₹{currentGain}</div>
+        <div className="tree-gain">Commission: {currentGain}</div>
       </div>
       
       {node.children && node.children.length > 0 && (
         <div className="tree-node-children">
           {node.children.map((child, index) => {
-            // Mock gain calculation based on level
-            const nextGain = Math.max(10 - child.level, 1);
             return (
               <TreeNode 
                 key={child._id} 
                 node={child} 
                 isLastChild={index === node.children.length - 1}
-                currentGain={nextGain}
+                currentGain="10%"
               />
             );
           })}
@@ -66,22 +64,6 @@ export default function TeamsPage() {
     }
   }
 
-  // Calculate total network earning in UI directly for wow factor based on our mock logic
-  // Recurse over tree
-  const calculateTotalMockGain = (nodes) => {
-    let total = 0;
-    const recurse = (list) => {
-      for (const n of list) {
-        total += Math.max(10 - n.level, 1);
-        if (n.children) recurse(n.children);
-      }
-    };
-    recurse(nodes);
-    return total;
-  };
-
-  const totalGain = calculateTotalMockGain(treeData);
-
   return (
     <div className="teams-container">
       <div className="teams-header">
@@ -97,8 +79,8 @@ export default function TeamsPage() {
             <span className="value gradient-text" style={{ fontSize: '2rem' }}>{data?.summary.totalItems || 0}</span>
           </div>
           <div className="mini-stat">
-            <span className="label">Total Estimated Gain</span>
-            <span className="value" style={{ fontSize: '2rem', color: '#00ff88' }}>₹{totalGain}</span>
+            <span className="label">Commission Share</span>
+            <span className="value" style={{ fontSize: '2rem', color: '#00ff88' }}>10% / Member</span>
           </div>
         </div>
       </div>
@@ -112,7 +94,7 @@ export default function TeamsPage() {
                 key={node._id} 
                 node={node} 
                 isLastChild={i === treeData.length - 1} 
-                currentGain={Math.max(10 - node.level, 1)} 
+                currentGain="10%" 
               />
             ))
           ) : (

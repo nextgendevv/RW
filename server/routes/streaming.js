@@ -12,6 +12,10 @@ router.post('/sync-access', authMiddleware, async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
+    if (!user.subscription) {
+      return res.status(403).json({ message: 'Active subscription required for streaming access.' });
+    }
+
     const streamUrl = process.env.STREAMING_SITE_URL;
     const streamSecret = process.env.STREAMING_API_SECRET;
 
@@ -31,6 +35,26 @@ router.post('/sync-access', authMiddleware, async (req, res) => {
   } catch (err) {
       console.error('STREAMING_SYNC_ERROR:', err.message);
       res.status(500).json({ message: "Failed to communicate with streaming service." });
+  }
+});
+
+// @route   POST /api/streaming/subscribe
+// @desc    Mock subscription purchase
+// @access  Private
+router.post('/subscribe', authMiddleware, async (req, res) => {
+  try {
+    const { plan } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.subscription = true;
+    user.subscriptionPlan = plan || '1_year'; // save the plan
+    await user.save();
+
+    res.json({ success: true, user });
+  } catch (err) {
+      console.error('STREAMING_SUBSCRIBE_ERROR:', err.message);
+      res.status(500).json({ message: "Failed to process subscription." });
   }
 });
 

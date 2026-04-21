@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
+const Deposit = require('../models/Deposit');
 const axios = require('axios');
 
 async function syncToNetX(userEmail, userName) {
@@ -81,6 +82,117 @@ router.put('/users/:id/premium', [auth, admin], async (req, res) => {
   } catch (err) {
     console.error('ADMIN_UPGRADE_USER_ERROR:', err);
     res.status(500).json({ message: 'Server error while upgrading user.' });
+  }
+});
+
+// @route   GET /api/admin/users/:id/team
+// @desc    Get user's recruitment tree (10 levels) for Admin
+// @access  Private/Admin
+router.get('/users/:id/team', [auth, admin], async (req, res) => {
+  try {
+    const targetUser = await User.findById(req.params.id);
+    if (!targetUser || !targetUser.referralCode) {
+      return res.status(404).json({ message: 'User or referral code not found' });
+    }
+
+    const maxLevels = 10;
+    const levels = {};
+    const summary = {};
+    let totalItems = 0;
+    
+    for (let i = 1; i <= maxLevels; i++) {
+        levels[`level${i}`] = [];
+        summary[`level${i}Count`] = 0;
+    }
+
+    let currentLevelUsers = await User.find({ referredBy: targetUser.referralCode }).select('-password');
+    levels['level1'] = currentLevelUsers;
+    summary['level1Count'] = currentLevelUsers.length;
+    totalItems += currentLevelUsers.length;
+
+    let currentLevelCodes = currentLevelUsers.map(u => u.referralCode);
+
+    for (let i = 2; i <= maxLevels; i++) {
+      if (currentLevelCodes.length === 0) break;
+      const nextLevelUsers = await User.find({ referredBy: { $in: currentLevelCodes } }).select('-password');
+      levels[`level${i}`] = nextLevelUsers;
+      summary[`level${i}Count`] = nextLevelUsers.length;
+      totalItems += nextLevelUsers.length;
+      
+      currentLevelCodes = nextLevelUsers.map(u => u.referralCode).filter(Boolean);
+    }
+    
+    summary.totalItems = totalItems;
+
+    const buildTree = (referralCode, currentLevel) => {
+        if (currentLevel > maxLevels) return [];
+        const usersInNextLevel = levels[`level${currentLevel}`] || [];
+        const directChildren = usersInNextLevel.filter(u => u.referredBy === referralCode);
+        
+        return directChildren.map(child => {
+             return {
+                 ...child.toObject(),
+                 level: currentLevel,
+                 children: buildTree(child.referralCode, currentLevel + 1)
+             };
+        });
+    };
+
+    const tree = buildTree(targetUser.referralCode, 1);
+
+    res.json({
+      targetUser,
+      summary,
+      levels,
+      tree
+    });
+  } catch (err) {
+    console.error('ADMIN_GET_TEAM_ERROR:', err);
+    res.status(500).json({ message: 'Server error while fetching team data.' });
+  }
+});
+
+// @route   GET /api/admin/deposits
+// @desc    Get all wallet deposit requests
+// @access  Private/Admin
+router.get('/deposits', [auth, admin], async (req, res) => {
+  try {
+    const deposits = await Deposit.find().populate('user', 'firstName lastName email').sort({ createdAt: -1 });
+    res.json(deposits);
+  } catch (err) {
+    console.error('ADMIN_GET_DEPOSITS_ERROR:', err);
+    res.status(500).json({ message: 'Server error while fetching deposits.' });
+  }
+});
+
+// @route   PUT /api/admin/deposits/:id/:action
+// @desc    Approve or reject a deposit
+// @access  Private/Admin
+router.put('/deposits/:id/:action', [auth, admin], async (req, res) => {
+  try {
+    const { action } = req.params; // 'approve' or 'reject'
+    const deposit = await Deposit.findById(req.params.id);
+    
+    if (!deposit) return res.status(404).json({ message: 'Deposit request not found' });
+    if (deposit.status !== 'pending') return res.status(400).json({ message: 'Deposit is already ' + deposit.status });
+
+    if (action === 'approve') {
+      deposit.status = 'approved';
+      await deposit.save();
+      const user = await User.findById(deposit.user);
+      user.walletBalance = (user.walletBalance || 0) + deposit.amount;
+      await user.save();
+    } else if (action === 'reject') {
+      deposit.status = 'rejected';
+      await deposit.save();
+    } else {
+      return res.status(400).json({ message: 'Invalid action' });
+    }
+
+    res.json({ message: `Deposit ${action}d successfully.`, deposit });
+  } catch (err) {
+    console.error('ADMIN_DEPOSIT_ACTION_ERROR:', err);
+    res.status(500).json({ message: 'Server error while processing deposit.' });
   }
 });
 
