@@ -1,4 +1,13 @@
 import { NavLink, useNavigate } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  User, 
+  Users, 
+  Settings, 
+  LogOut, 
+  X,
+  Leaf
+} from '../components/Icons';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -19,9 +28,9 @@ export default function Sidebar({ isOpen, onClose }) {
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
-        <div className="brand-icon">🌿</div>
+        <div className="brand-icon"><Leaf size={28} className="text-primary" /></div>
         <h1 className="brand-name">Richway</h1>
-        <button className="sidebar-close" onClick={onClose}>✕</button>
+        <button className="sidebar-close" onClick={onClose}><X size={20} /></button>
       </div>
       <div className="sidebar-user">
         <p>Welcome, {user?.firstName || 'User'}</p>
@@ -32,21 +41,30 @@ export default function Sidebar({ isOpen, onClose }) {
           className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
           onClick={handleLinkClick}
         >
-          Dashboard
+          <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+            <LayoutDashboard size={18} />
+            Dashboard
+          </div>
         </NavLink>
         <NavLink 
           to="/profile" 
           className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
           onClick={handleLinkClick}
         >
-          Profile
+          <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+            <User size={18} />
+            Profile
+          </div>
         </NavLink>
         <NavLink 
           to="/teams" 
           className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
           onClick={handleLinkClick}
         >
-          Teams
+          <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+            <Users size={18} />
+            Teams
+          </div>
         </NavLink>
         {user?.role === 'admin' && (
           <NavLink 
@@ -54,12 +72,17 @@ export default function Sidebar({ isOpen, onClose }) {
             className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
             onClick={handleLinkClick}
           >
-            Admin
+            <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+              <Settings size={18} />
+              Admin
+            </div>
           </NavLink>
         )}
       </nav>
       <div className="sidebar-footer">
-        <button onClick={handleLogout} className="btn-logout">Logout</button>
+        <button onClick={handleLogout} className="btn-logout" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
+          <LogOut size={18} /> Logout
+        </button>
       </div>
     </aside>
   );

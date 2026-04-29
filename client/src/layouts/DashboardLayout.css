@@ -10,8 +10,10 @@
 
 .app-content {
   flex-grow: 1;
-  padding: 40px;
+  padding: 32px 40px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--glass-border) transparent;
 }
 
 .sidebar {
@@ -117,15 +119,8 @@
   border-color: var(--danger);
 }
 
-/* Page Containers */
+/* Page Containers - Softened for new layouts */
 .profile-page, .dashboard-page {
-  background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 40px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
   animation: fadeUp 0.5s ease-out both;
 }
 

@@ -1,6 +1,47 @@
 import { useState, useEffect } from 'react';
+import { 
+  Users, 
+  HandCoins, 
+  Activity, 
+  UserCheck, 
+  Clock, 
+  X,
+  Eye,
+  CheckCircle2,
+  XCircle,
+  LayoutDashboard
+} from '../components/Icons';
 import api from '../api';
 import './AdminPage.css';
+
+const TreeNode = ({ node, isLastChild }) => {
+  return (
+    <div className={`tree-node ${isLastChild ? 'last-child' : ''}`}>
+      <div className="tree-content">
+        <div className="tree-user-info">
+          <div className="tree-user-avatar">{node.firstName[0]}</div>
+          <div className="tree-user-details">
+            <h4>{node.firstName} {node.lastName}</h4>
+            <span>Level {node.level} • {new Date(node.createdAt).toLocaleDateString()}</span>
+          </div>
+        </div>
+        <div className="tree-gain">Commission: 10%</div>
+      </div>
+      
+      {node.children && node.children.length > 0 && (
+        <div className="tree-node-children">
+          {node.children.map((child, index) => (
+            <TreeNode 
+              key={child._id} 
+              node={child} 
+              isLastChild={index === node.children.length - 1}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function AdminPage() {
   const [users, setUsers] = useState([]);
@@ -10,17 +51,21 @@ export default function AdminPage() {
   const [selectedUserTeam, setSelectedUserTeam] = useState(null);
   const [loadingTeam, setLoadingTeam] = useState(false);
 
+  const [commissions, setCommissions] = useState([]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [usersRes, statsRes, depositsRes] = await Promise.all([
+        const [usersRes, statsRes, depositsRes, commissionsRes] = await Promise.all([
           api.get('/admin/users'),
           api.get('/admin/stats'),
-          api.get('/admin/deposits')
+          api.get('/admin/deposits'),
+          api.get('/admin/commissions')
         ]);
         setUsers(usersRes.data);
         setStats(statsRes.data);
         setDeposits(depositsRes.data);
+        setCommissions(commissionsRes.data);
       } catch (err) {
         console.error('Failed to fetch admin data', err);
       } finally {
@@ -63,63 +108,44 @@ export default function AdminPage() {
     }
   };
 
-  const TreeNode = ({ node, isLastChild }) => {
-    return (
-      <div className={`tree-node ${isLastChild ? 'last-child' : ''}`}>
-        <div className="tree-content">
-          <div className="tree-user-info">
-            <div className="tree-user-avatar">{node.firstName[0]}</div>
-            <div className="tree-user-details">
-              <h4>{node.firstName} {node.lastName}</h4>
-              <span>Level {node.level} • {new Date(node.createdAt).toLocaleDateString()}</span>
-            </div>
-          </div>
-          <div className="tree-gain">Commission: 10%</div>
-        </div>
-        
-        {node.children && node.children.length > 0 && (
-          <div className="tree-node-children">
-            {node.children.map((child, index) => (
-              <TreeNode 
-                key={child._id} 
-                node={child} 
-                isLastChild={index === node.children.length - 1}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   if (loading) return <div className="loading-screen"><div className="loading-spinner" /></div>;
 
   return (
     <div className="admin-container">
       <div className="admin-header">
-        <h1 className="gradient-text">Admin Dashboard</h1>
-        <p>Monitor system activity and manage users across the network</p>
+        <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
+          <LayoutDashboard size={32} className="text-primary" />
+          <div>
+            <h1 className="gradient-text" style={{margin: 0}}>Admin Dashboard</h1>
+            <p style={{margin: 0}}>Monitor system activity and manage users across the network</p>
+          </div>
+        </div>
       </div>
 
       <div className="stats-overview">
         <div className="stat-card glass-card">
-          <span className="stat-label">Total Users</span>
+          <div style={{display: 'flex', justifyContent: 'space-between'}}>
+            <span className="stat-label">Total Users</span>
+            <Users size={20} className="text-primary" />
+          </div>
           <span className="stat-value">{stats?.totalUsers || 0}</span>
           <div className="stat-status positive">+ {stats?.newUsersLast7Days || 0} this week</div>
         </div>
         <div className="stat-card glass-card">
-          <span className="stat-label">Active Roles</span>
-          <div className="role-distribution">
-            {stats?.roleStats.map(role => (
-              <div key={role._id} className="role-item">
-                <span className="role-name">{role._id}</span>
-                <span className="role-count">{role.count}</span>
-              </div>
-            ))}
+          <div style={{display: 'flex', justifyContent: 'space-between'}}>
+            <span className="stat-label">Total Commission Shared</span>
+            <HandCoins size={20} className="text-primary" />
           </div>
+          <span className="stat-value" style={{ color: '#00ff88' }}>
+            ₹{commissions.reduce((acc, curr) => acc + curr.amount, 0).toFixed(2)}
+          </span>
+          <div className="stat-status positive">{commissions.length} shares</div>
         </div>
         <div className="stat-card glass-card">
-          <span className="stat-label">System Health</span>
+          <div style={{display: 'flex', justifyContent: 'space-between'}}>
+            <span className="stat-label">System Health</span>
+            <Activity size={20} className="text-primary" />
+          </div>
           <span className="stat-value">Optimal</span>
           <div className="pulse-indicator" />
         </div>
@@ -127,7 +153,10 @@ export default function AdminPage() {
 
       <div className="user-management-section glass-card">
         <div className="section-header">
-          <h2>User Management</h2>
+          <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+            <UserCheck size={22} className="text-primary" />
+            <h2 style={{margin: 0}}>User Management</h2>
+          </div>
           <span className="badge">{users.length} Users</span>
         </div>
         
@@ -160,14 +189,16 @@ export default function AdminPage() {
                   </td>
                   <td>
                     {u.subscription ? (
-                      <span className="badge" style={{ backgroundColor: '#1DB954' }}>Premium</span>
+                      <span className="badge" style={{ backgroundColor: '#1DB954', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <CheckCircle2 size={12} /> Premium
+                      </span>
                     ) : (
                       <button onClick={() => handleUpgradeToPremium(u._id)} className="btn-secondary" style={{ padding: '4px 8px', fontSize: '0.8rem' }}>
                         Upgrade
                       </button>
                     )}
-                    <button onClick={() => handleViewTeam(u._id)} className="btn-secondary" style={{ marginLeft: '8px', padding: '4px 8px', fontSize: '0.8rem', backgroundColor: '#333' }}>
-                      {loadingTeam ? '...' : 'View Team'}
+                    <button onClick={() => handleViewTeam(u._id)} className="btn-secondary" style={{ marginLeft: '8px', padding: '4px 8px', fontSize: '0.8rem', backgroundColor: '#333', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Eye size={12} /> {loadingTeam ? '...' : 'View Team'}
                     </button>
                   </td>
                   <td>
@@ -187,7 +218,10 @@ export default function AdminPage() {
 
       <div className="deposit-management-section glass-card" style={{ marginTop: '40px' }}>
         <div className="section-header">
-          <h2>Deposit Requests</h2>
+          <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+            <Clock size={22} className="text-primary" />
+            <h2 style={{margin: 0}}>Deposit Requests</h2>
+          </div>
           <span className="badge">{deposits.filter(d => d.status === 'pending').length} Pending</span>
         </div>
         
@@ -216,8 +250,13 @@ export default function AdminPage() {
                   <td>
                     <span className="badge" style={{ 
                         backgroundColor: d.status === 'approved' ? '#1DB954' : d.status === 'rejected' ? '#e74c3c' : '#f39c12',
-                        color: '#fff'
+                        color: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        width: 'fit-content'
                     }}>
+                      {d.status === 'approved' ? <CheckCircle2 size={12} /> : d.status === 'rejected' ? <XCircle size={12} /> : <Clock size={12} />}
                       {d.status.toUpperCase()}
                     </span>
                   </td>
@@ -247,6 +286,52 @@ export default function AdminPage() {
         </div>
       </div>
 
+      <div className="commission-log-section glass-card" style={{ marginTop: '40px' }}>
+        <div className="section-header">
+          <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+            <HandCoins size={22} className="text-primary" />
+            <h2 style={{margin: 0}}>Commission Shares</h2>
+          </div>
+          <span className="badge">{commissions.length} Events</span>
+        </div>
+        
+        <div className="table-wrapper">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Recipient (Referrer)</th>
+                <th>From (Subscriber)</th>
+                <th>Plan</th>
+                <th>Amount (₹)</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {commissions.map(c => (
+                <tr key={c._id}>
+                  <td>
+                    {c.recipient ? `${c.recipient.firstName} ${c.recipient.lastName}` : 'Unknown'}
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>{c.recipient?.email}</div>
+                  </td>
+                  <td>
+                    {c.fromUser ? `${c.fromUser.firstName} ${c.fromUser.lastName}` : 'Unknown'}
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>{c.fromUser?.email}</div>
+                  </td>
+                  <td><span className="badge" style={{ backgroundColor: '#333' }}>{c.plan}</span></td>
+                  <td style={{ fontWeight: 'bold', color: '#00ff88' }}>₹{c.amount.toFixed(2)}</td>
+                  <td>{new Date(c.createdAt).toLocaleString()}</td>
+                </tr>
+              ))}
+              {commissions.length === 0 && (
+                <tr>
+                  <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>No commission shares recorded yet.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Team Details Modal */}
       {selectedUserTeam && (
         <div className="modal-overlay" style={{
@@ -263,7 +348,7 @@ export default function AdminPage() {
               position: 'absolute', top: '16px', right: '16px',
               background: 'transparent', border: 'none', color: '#fff',
               fontSize: '1.5rem', cursor: 'pointer'
-            }}>&times;</button>
+            }}><X size={24} /></button>
             
             <h2 className="gradient-text" style={{ marginBottom: '8px' }}>
               Team Structure level-wise: {selectedUserTeam.targetUser?.firstName} {selectedUserTeam.targetUser?.lastName}

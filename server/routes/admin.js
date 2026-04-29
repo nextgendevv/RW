@@ -196,4 +196,21 @@ router.put('/deposits/:id/:action', [auth, admin], async (req, res) => {
   }
 });
 
+// @route   GET /api/admin/commissions
+// @desc    Get all commission share records
+// @access  Private/Admin
+router.get('/commissions', [auth, admin], async (req, res) => {
+  try {
+    const Commission = require('../models/Commission');
+    const commissions = await Commission.find()
+      .populate('recipient', 'firstName lastName email')
+      .populate('fromUser', 'firstName lastName email')
+      .sort({ createdAt: -1 });
+    res.json(commissions);
+  } catch (err) {
+    console.error('ADMIN_GET_COMMISSIONS_ERROR:', err);
+    res.status(500).json({ message: 'Server error while fetching commissions.' });
+  }
+});
+
 module.exports = router;
