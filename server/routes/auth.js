@@ -60,14 +60,15 @@ router.post('/register', async (req, res) => {
     await user.save();
     console.log(`REGISTER_SUCCESS: User created: ${email}`);
 
-    // Sync to NetX
-    await syncToNetX(email, firstName);
+    // Sync to NetX in the background without awaiting
+    syncToNetX(email, firstName).catch(err => console.error('NetX background sync error:', err));
 
     const payload = { user: { id: user.id } };
 
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' }, (err, token) => {
       if (err) throw err;
-      res.status(201).json({ token });
+      user.password = undefined;
+      res.status(201).json({ token, user });
     });
   } catch (err) {
     console.error('REGISTER_ERROR:', err);
@@ -103,7 +104,8 @@ router.post('/login', async (req, res) => {
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' }, (err, token) => {
       if (err) throw err;
       console.log(`LOGIN_SUCCESS: User logged in: ${email}`);
-      res.json({ token });
+      user.password = undefined;
+      res.json({ token, user });
     });
   } catch (err) {
     console.error('LOGIN_ERROR:', err);

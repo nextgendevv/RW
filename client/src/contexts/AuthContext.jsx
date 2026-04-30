@@ -33,15 +33,23 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const response = await api.post('/auth/login', { email, password });
     localStorage.setItem('token', response.data.token);
-    const userResponse = await api.get('/auth/me');
-    setUser(userResponse.data);
+    if (response.data.user) {
+      setUser(response.data.user);
+    } else {
+      const userResponse = await api.get('/auth/me');
+      setUser(userResponse.data);
+    }
   };
 
   const register = async (userData) => {
     const response = await api.post('/auth/register', userData);
     localStorage.setItem('token', response.data.token);
-    const userResponse = await api.get('/auth/me');
-    setUser(userResponse.data);
+    if (response.data.user) {
+      setUser(response.data.user);
+    } else {
+      const userResponse = await api.get('/auth/me');
+      setUser(userResponse.data);
+    }
   };
 
   const logout = () => {

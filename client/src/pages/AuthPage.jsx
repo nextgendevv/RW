@@ -136,21 +136,23 @@ export default function AuthPage({ defaultRef, defaultTab }) {
                 />
               </div>
             </div>
-            <div className="form-group">
-              <label>Email <span className="required">*</span></label>
-              <input
-                name="email" type="email"
-                value={regForm.email} onChange={handleRegChange}
-                placeholder="john@example.com" required
-              />
-            </div>
-            <div className="form-group">
-              <label>Phone Number <span className="required">*</span></label>
-              <input
-                name="phone" type="tel"
-                value={regForm.phone} onChange={handleRegChange}
-                placeholder="+91 98765 43210" required
-              />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Email <span className="required">*</span></label>
+                <input
+                  name="email" type="email"
+                  value={regForm.email} onChange={handleRegChange}
+                  placeholder="john@example.com" required
+                />
+              </div>
+              <div className="form-group">
+                <label>Phone Number <span className="required">*</span></label>
+                <input
+                  name="phone" type="tel"
+                  value={regForm.phone} onChange={handleRegChange}
+                  placeholder="+91 98765 43210" required
+                />
+              </div>
             </div>
             <div className="form-group">
               <label>Referral Code <span className="optional">(optional)</span></label>
@@ -167,21 +169,23 @@ export default function AuthPage({ defaultRef, defaultTab }) {
                 )}
               </div>
             </div>
-            <div className="form-group">
-              <label>Password <span className="required">*</span></label>
-              <input
-                name="password" type="password"
-                value={regForm.password} onChange={handleRegChange}
-                placeholder="Min 6 characters" required
-              />
-            </div>
-            <div className="form-group">
-              <label>Confirm Password <span className="required">*</span></label>
-              <input
-                name="confirmPassword" type="password"
-                value={regForm.confirmPassword} onChange={handleRegChange}
-                placeholder="Re-enter password" required
-              />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Password <span className="required">*</span></label>
+                <input
+                  name="password" type="password"
+                  value={regForm.password} onChange={handleRegChange}
+                  placeholder="Min 6 characters" required
+                />
+              </div>
+              <div className="form-group">
+                <label>Confirm Password <span className="required">*</span></label>
+                <input
+                  name="confirmPassword" type="password"
+                  value={regForm.confirmPassword} onChange={handleRegChange}
+                  placeholder="Re-enter password" required
+                />
+              </div>
             </div>
             {error && <div className="error-msg">⚠ {error}</div>}
             <button type="submit" className="btn-primary" disabled={loading}>

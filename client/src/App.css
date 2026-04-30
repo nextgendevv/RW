@@ -53,7 +53,7 @@
 .auth-card {
   padding: 40px;
   width: 100%;
-  max-width: 400px;
+  max-width: 500px;
   animation: fadeUp 0.6s ease-out both;
 }
 
@@ -137,6 +137,7 @@
 }
 
 .form-group input {
+  width: 100%;
   background: var(--bg-dark-800);
   border: 1px solid var(--bg-dark-700);
   border-radius: var(--radius-md);
@@ -165,6 +166,10 @@
   cursor: pointer;
   transition: var(--transition);
   font-size: 1rem;
+}
+
+.auth-form .btn-primary {
+  width: 100%;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -1551,13 +1556,13 @@
   }
 }
 
-/* Premium Profile Layout (3-Column Desktop) */
+/* Premium Profile Layout (Vertical Stacked Desktop) */
 .profile-wrapper-premium {
-  display: grid;
-  grid-template-columns: 280px 1fr 300px;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
   width: 100%;
-  max-width: 1400px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 20px 0;
 }
@@ -1586,8 +1591,15 @@
 
 .identity-actions-vertical {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.identity-actions-vertical button {
+  flex: 1;
+  min-width: 200px;
+  max-width: 250px;
 }
 
 .btn-primary-outline {
