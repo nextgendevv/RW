@@ -6,6 +6,7 @@ const commissionSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   plan: { type: String, required: true },
   level: { type: Number, default: 1 }, // Level in the hierarchy
+  status: { type: String, enum: ['pending', 'paid'], default: 'pending' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Commission', commissionSchema);

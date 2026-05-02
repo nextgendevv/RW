@@ -5,21 +5,8 @@ const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 const Deposit = require('../models/Deposit');
 const axios = require('axios');
+const { syncToNetX } = require('../utils/sync');
 
-async function syncToNetX(userEmail, userName) {
-  try {
-    const response = await axios.post('https://netx-1.onrender.com/api/auth/external-sync', {
-      secret: process.env.PARTNER_API_SECRET || 'your_secret_from_env', // Use the same PARTNER_API_SECRET
-      email: userEmail,
-      username: userName,
-      plan: 'premium', // Automatically mark them as Premium
-      active: true
-    });
-    console.log('Account created/synced on NetX successfully!');
-  } catch (error) {
-    console.error('NetX Sync failed:', error.response?.data?.message || error.message);
-  }
-}
 
 // @route   GET /api/admin/users
 // @desc    Get all users with basic info
@@ -180,8 +167,10 @@ router.put('/deposits/:id/:action', [auth, admin], async (req, res) => {
       deposit.status = 'approved';
       await deposit.save();
       const user = await User.findById(deposit.user);
-      user.walletBalance = (user.walletBalance || 0) + deposit.amount;
-      await user.save();
+      if (user) {
+        user.walletBalance = (user.walletBalance || 0) + deposit.amount;
+        await user.save();
+      }
     } else if (action === 'reject') {
       deposit.status = 'rejected';
       await deposit.save();
@@ -210,6 +199,35 @@ router.get('/commissions', [auth, admin], async (req, res) => {
   } catch (err) {
     console.error('ADMIN_GET_COMMISSIONS_ERROR:', err);
     res.status(500).json({ message: 'Server error while fetching commissions.' });
+  }
+});
+
+// @route   PUT /api/admin/commissions/:id/pay
+// @desc    Manually approve (give) a commission to a referrer
+// @access  Private/Admin
+router.put('/commissions/:id/pay', [auth, admin], async (req, res) => {
+  try {
+    const Commission = require('../models/Commission');
+    const commission = await Commission.findById(req.params.id);
+    
+    if (!commission) return res.status(404).json({ message: 'Commission record not found' });
+    if (commission.status === 'paid') return res.status(400).json({ message: 'Commission is already paid' });
+
+    // Mark as paid
+    commission.status = 'paid';
+    await commission.save();
+
+    // Credit the recipient's wallet
+    const recipient = await User.findById(commission.recipient);
+    if (recipient) {
+      recipient.walletBalance = (recipient.walletBalance || 0) + commission.amount;
+      await recipient.save();
+    }
+
+    res.json({ message: 'Commission given successfully.', commission });
+  } catch (err) {
+    console.error('ADMIN_PAY_COMMISSION_ERROR:', err);
+    res.status(500).json({ message: 'Server error while giving commission.' });
   }
 });
 

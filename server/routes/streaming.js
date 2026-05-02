@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
 const axios = require('axios');
+const { syncToNetX } = require('../utils/sync');
 
 // @route   POST /api/streaming/sync-access
 // @desc    Sync user with the partner streaming website
@@ -24,11 +25,12 @@ router.post('/sync-access', authMiddleware, async (req, res) => {
     }
 
     // Call the streaming site partner API securely
-    const response = await axios.post(`${streamUrl}/api/partner/sync-user`, {
+    const response = await axios.post(`${streamUrl}/api/auth/external-sync`, {
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName || '',
-        secret: streamSecret 
+        username: user.firstName,
+        secret: streamSecret,
+        plan: 'premium',
+        active: true
     }, { timeout: 10000 }); // 10 second timeout
 
     res.json({ success: true, redirectUrl: streamUrl });
@@ -36,7 +38,7 @@ router.post('/sync-access', authMiddleware, async (req, res) => {
       console.error('STREAMING_SYNC_ERROR:', err.response?.data || err.message);
       res.status(500).json({ 
         message: "Failed to communicate with streaming service.",
-        error: err.response?.data?.message || err.message 
+        error: err.response?.data?.message || err.response?.data || err.message 
       });
   }
 });
@@ -58,27 +60,37 @@ router.post('/subscribe', authMiddleware, async (req, res) => {
     };
 
     const price = prices[plan] || 499;
+    
+    // Check if user has enough balance
+    if ((user.walletBalance || 0) < price) {
+      return res.status(400).json({ 
+        message: `Insufficient balance. This plan costs ₹${price}, but your balance is ₹${user.walletBalance || 0}. Please add funds first.` 
+      });
+    }
+
     const commissionAmount = price * 0.10; // 10% share
 
+    // Deduct price from user's wallet
+    user.walletBalance = (user.walletBalance || 0) - price;
     user.subscription = true;
     user.subscriptionPlan = plan || '1_year';
     await user.save();
 
-    // Distribute commission to referrer
+    // Sync to NetX (background)
+    syncToNetX(user.email, user.firstName).catch(err => console.error('NetX Sync Error:', err));
+
+    // Log commission as PENDING (Admin must "give" it manually)
     if (user.referredBy) {
       const referrer = await User.findOne({ referralCode: user.referredBy });
       if (referrer) {
-        referrer.walletBalance = (referrer.walletBalance || 0) + commissionAmount;
-        await referrer.save();
-
-        // Log commission
         const Commission = require('../models/Commission');
         await Commission.create({
           recipient: referrer._id,
           fromUser: user._id,
           amount: commissionAmount,
           plan: plan,
-          level: 1
+          level: 1,
+          status: 'pending'
         });
       }
     }

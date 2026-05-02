@@ -44,6 +44,20 @@ export default function AdminSidebar({ isOpen, onClose }) {
         >
           User Management
         </NavLink>
+        <NavLink 
+          to="/admin/deposits" 
+          className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+          onClick={handleLinkClick}
+        >
+          Deposit Approvals
+        </NavLink>
+        <NavLink 
+          to="/admin/commissions" 
+          className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+          onClick={handleLinkClick}
+        >
+          Commission Management
+        </NavLink>
         <div className="nav-divider" />
         <NavLink 
           to="/dashboard" 

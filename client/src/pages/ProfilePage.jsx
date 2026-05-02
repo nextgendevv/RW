@@ -111,6 +111,21 @@ export default function ProfilePage() {
   };
 
   const handleSubscribe = async (plan) => {
+    // Plan prices
+    const prices = {
+      '1_month': 99,
+      '1_year': 499,
+      '5_years': 1999
+    };
+    const price = prices[plan] || 499;
+
+    // Check balance before even trying
+    if (wallet.balance < price) {
+      setSaveMsg(`Insufficient funds! ₹${price} required, but you have ₹${wallet.balance}. Please add funds below.`);
+      setTimeout(() => setSaveMsg(''), 6000);
+      return;
+    }
+
     try {
       setSaving(true);
       const planName = plan === '1_month' ? '1 Month' : (plan === '1_year' ? '1 Year' : '5 Years');
@@ -123,7 +138,7 @@ export default function ProfilePage() {
       }
     } catch (err) {
       console.error('Failed to subscribe', err);
-      setSaveMsg('Subscription failed. Please try again.');
+      setSaveMsg(err.response?.data?.message || 'Subscription failed. Please try again.');
       setTimeout(() => setSaveMsg(''), 4000);
     } finally {
       setSaving(false);

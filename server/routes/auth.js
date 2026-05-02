@@ -5,21 +5,8 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
 const axios = require('axios');
+const { syncToNetX } = require('../utils/sync');
 
-async function syncToNetX(userEmail, userName) {
-  try {
-    const response = await axios.post('https://netx-1.onrender.com/api/auth/external-sync', {
-      secret: process.env.PARTNER_API_SECRET || 'your_secret_from_env', // Use the same PARTNER_API_SECRET
-      email: userEmail,
-      username: userName,
-      plan: 'premium', // Automatically mark them as Premium
-      active: true
-    });
-    console.log('Account created on NetX successfully!');
-  } catch (error) {
-    console.error('NetX Sync failed:', error.response?.data?.message || error.message);
-  }
-}
 
 // @route   POST /api/auth/register
 // @desc    Register a user

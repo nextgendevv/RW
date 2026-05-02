@@ -8,6 +8,8 @@ import TeamsPage from './pages/TeamsPage';
 import AdminPage from './pages/AdminPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
+import DepositManagement from './pages/admin/DepositManagement';
+import CommissionManagement from './pages/admin/CommissionManagement';
 import AdminLoginPage from './pages/admin/AdminLoginPage';
 import HomePage from './pages/HomePage';
 import './App.css';
@@ -73,6 +75,8 @@ export default function App() {
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<UserManagement />} />
+            <Route path="deposits" element={<DepositManagement />} />
+            <Route path="commissions" element={<CommissionManagement />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
