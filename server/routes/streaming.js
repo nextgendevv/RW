@@ -25,20 +25,26 @@ router.post('/sync-access', authMiddleware, async (req, res) => {
     }
 
     // Call the streaming site partner API securely
+    console.log(`Attempting sync with: ${streamUrl}/api/auth/external-sync`);
     const response = await axios.post(`${streamUrl}/api/auth/external-sync`, {
         email: user.email,
         username: user.firstName,
         secret: streamSecret,
         plan: 'premium',
         active: true
-    }, { timeout: 10000 }); // 10 second timeout
+    }, { timeout: 15000 }); // Increased timeout for Render-to-Render communication
 
     res.json({ success: true, redirectUrl: streamUrl });
   } catch (err) {
-      console.error('STREAMING_SYNC_ERROR:', err.response?.data || err.message);
+      const errorDetail = err.response?.data?.message || err.response?.data || err.message;
+      console.error('❌ STREAMING_SYNC_ERROR:', errorDetail);
       res.status(500).json({ 
         message: "Failed to communicate with streaming service.",
-        error: err.response?.data?.message || err.response?.data || err.message 
+        error: errorDetail,
+        debug_info: {
+            url_attempted: process.env.STREAMING_SITE_URL,
+            has_secret: !!process.env.STREAMING_API_SECRET
+        }
       });
   }
 });
