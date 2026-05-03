@@ -56,7 +56,7 @@ app.get('/health', (req, res) => res.json({ status: 'OK' }));
 if (process.env.NODE_ENV === 'production' || process.env.RENDER) {
   app.use(express.static(path.join(__dirname, '../client/dist')));
 
-  app.get('(.*)', (req, res) => {
+  app.get('/*splat', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../client/dist', 'index.html'));
   });
 } else {
