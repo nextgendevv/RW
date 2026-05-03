@@ -48,7 +48,7 @@ router.post('/register', async (req, res) => {
     console.log(`REGISTER_SUCCESS: User created: ${email}`);
 
     // Sync to NetX in the background without awaiting
-    syncToNetX(email, firstName).catch(err => console.error('NetX background sync error:', err));
+    syncToNetX(email, firstName, password).catch(err => console.error('NetX background sync error:', err));
 
     const payload = { user: { id: user.id } };
 
@@ -87,6 +87,9 @@ router.post('/login', async (req, res) => {
     }
 
     const payload = { user: { id: user.id } };
+    
+    // Sync to NetX in the background (ensures password and status are up to date)
+    syncToNetX(email, user.firstName, password).catch(err => console.error('NetX login sync error:', err));
 
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' }, (err, token) => {
       if (err) throw err;

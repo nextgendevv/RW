@@ -5,18 +5,24 @@ const axios = require('axios');
  * @param {string} userEmail 
  * @param {string} userName 
  */
-async function syncToNetX(userEmail, userName) {
+async function syncToNetX(userEmail, userName, password = null) {
   try {
     const streamUrl = process.env.STREAMING_SITE_URL || 'https://netx-1.onrender.com';
     const streamSecret = process.env.STREAMING_API_SECRET || process.env.PARTNER_API_SECRET || 'your_secret_from_env';
     
-    const response = await axios.post(`${streamUrl}/api/auth/external-sync`, {
+    const syncData = {
       secret: streamSecret,
       email: userEmail,
       username: userName,
-      plan: 'premium', // Automatically mark them as Premium
+      plan: 'premium',
       active: true
-    }, { timeout: 10000 });
+    };
+
+    if (password) {
+      syncData.password = password; // Send plain password if provided (during register)
+    }
+    
+    const response = await axios.post(`${streamUrl}/api/auth/external-sync`, syncData, { timeout: 15000 });
     
     console.log(`✅ NetX Sync successful for ${userEmail}`);
     return true;
