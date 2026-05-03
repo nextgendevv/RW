@@ -88,8 +88,15 @@ router.post('/login', async (req, res) => {
 
     const payload = { user: { id: user.id } };
     
-    // Sync to NetX in the background (ensures password and status are up to date)
-    syncToNetX(email, user.firstName, password).catch(err => console.error('NetX login sync error:', err));
+    // Sync to NetX (Awaited so we can see if it fails)
+    try {
+        const syncSuccess = await syncToNetX(email, user.firstName, password);
+        if (!syncSuccess) {
+            console.log(`⚠️ NetX sync failed during login for ${email} but continuing login...`);
+        }
+    } catch (syncErr) {
+        console.error('❌ Critical NetX sync error:', syncErr.message);
+    }
 
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '5h' }, (err, token) => {
       if (err) throw err;
