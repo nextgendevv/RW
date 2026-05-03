@@ -10,7 +10,7 @@ const User = require('../models/User');
 router.get('/verify', async (req, res) => {
   try {
     const { email, secret } = req.query;
-    const envSecret = (process.env.STREAMING_API_SECRET || '').trim();
+    const envSecret = (process.env.STREAMING_API_SECRET || '').trim().replace(/^["'](.+)["']$/, '$1');
 
     if (!secret || secret !== envSecret) {
       return res.status(401).json({ message: 'Invalid partner secret' });
@@ -45,7 +45,7 @@ router.get('/verify', async (req, res) => {
 router.post('/verify-login', async (req, res) => {
   try {
     const { email, password, secret } = req.body;
-    const envSecret = (process.env.STREAMING_API_SECRET || '').trim();
+    const envSecret = (process.env.STREAMING_API_SECRET || '').trim().replace(/^["'](.+)["']$/, '$1');
 
     if (!secret || secret !== envSecret) {
       return res.status(401).json({ message: 'Invalid partner secret' });
