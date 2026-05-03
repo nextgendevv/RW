@@ -8,6 +8,7 @@ const teamRoutes = require('./routes/teams');
 const adminRoutes = require('./routes/admin');
 const streamingRoutes = require('./routes/streaming');
 const walletRoutes = require('./routes/wallet');
+const externalRoutes = require('./routes/external');
 const compression = require('compression');
 const helmet = require('helmet');
 
@@ -47,11 +48,21 @@ app.use('/api/teams', teamRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/streaming', streamingRoutes);
 app.use('/api/wallet', walletRoutes);
+app.use('/api/external', externalRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'OK' }));
 
-// Basic root route for API health/info
-app.get('/', (req, res) => res.json({ message: 'Richway API is running' }));
+// Serve static assets in production
+if (process.env.NODE_ENV === 'production' || process.env.RENDER) {
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../client/dist', 'index.html'));
+  });
+} else {
+  // Basic root route for API health/info in development
+  app.get('/', (req, res) => res.json({ message: 'Richway API is running' }));
+}
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
