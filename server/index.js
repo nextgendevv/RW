@@ -50,16 +50,6 @@ app.use('/api/wallet', walletRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'OK' }));
 
-// Serve static files from the root dist folder (only if hosting frontend on same server)
-/*
-const clientPath = path.join(__dirname, '../dist');
-app.use(express.static(clientPath));
-
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(clientPath, 'index.html'));
-});
-*/
-
 // Basic root route for API health/info
 app.get('/', (req, res) => res.json({ message: 'Richway API is running' }));
 
