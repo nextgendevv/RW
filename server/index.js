@@ -50,15 +50,18 @@ app.use('/api/wallet', walletRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'OK' }));
 
-// Serve static files from the root dist folder (created during build)
+// Serve static files from the root dist folder (only if hosting frontend on same server)
+/*
 const clientPath = path.join(__dirname, '../dist');
 app.use(express.static(clientPath));
 
-// The "catchall" handler: for any request that doesn't
-// match one above, send back React's index.html file.
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(clientPath, 'index.html'));
 });
+*/
+
+// Basic root route for API health/info
+app.get('/', (req, res) => res.json({ message: 'Richway API is running' }));
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
