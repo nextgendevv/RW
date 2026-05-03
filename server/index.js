@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 require('./db');
+
 const authRoutes = require('./routes/auth');
 const teamRoutes = require('./routes/teams');
 const adminRoutes = require('./routes/admin');
@@ -15,17 +16,18 @@ const helmet = require('helmet');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Production Optimizations
+// 1. BASIC MIDDLEWARE FIRST
 app.use(helmet({
-  contentSecurityPolicy: false, // Let React handle CSP if needed
+  contentSecurityPolicy: false,
 }));
 app.use(compression());
 
-// CORS configuration - Allow local dev and same-origin
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3001',
-  'https://rw-ghhg.onrender.com'
+  'https://rw-ghhg.onrender.com',
+  'https://netx-1.onrender.com',
+  'https://netx-5y1m.onrender.com'
 ];
 
 app.use(cors({
@@ -33,8 +35,7 @@ app.use(cors({
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      callback(null, true); // For production same-origin, it might be null or the actual origin. 
-      // Simplified for now, can be hardened later.
+      callback(null, true); 
     }
   },
   credentials: true
@@ -42,7 +43,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// API Routes
+// 2. API ROUTES IMMEDIATELY AFTER JSON PARSER
 app.use('/api/auth', authRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/admin', adminRoutes);
@@ -52,19 +53,19 @@ app.use('/api/external', externalRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'OK' }));
 
-// Serve static assets in production
+// 3. STATIC FILES AND CATCH-ALL AT THE VERY BOTTOM
 if (process.env.NODE_ENV === 'production' || process.env.RENDER) {
-  app.use(express.static(path.join(__dirname, '../client/dist')));
+  const distPath = path.resolve(__dirname, '../client/dist');
+  app.use(express.static(distPath));
 
-  app.get('/*splat', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../client/dist', 'index.html'));
+  // Using regex literal for catch-all to be compatible with Express 5
+  app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
   });
 } else {
-  // Basic root route for API health/info in development
   app.get('/', (req, res) => res.json({ message: 'Richway API is running' }));
 }
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
-
