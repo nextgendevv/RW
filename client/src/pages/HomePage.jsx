@@ -59,7 +59,12 @@ export default function Home() {
 
       {/* FOOTER */}
       <footer className="footer">
-        <p>© 2026 Richway. All rights reserved.</p>
+        <div className="footer-content">
+          <p>© 2026 Richway. All rights reserved.</p>
+          <div className="footer-links">
+            <Link to="/admin/login" className="admin-link">Admin Portal</Link>
+          </div>
+        </div>
       </footer>
 
     </div>

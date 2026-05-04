@@ -34,53 +34,58 @@ export default function AdminLoginPage() {
 
   return (
     <div className="admin-login-wrapper">
-      <div className="admin-login-card glass-card">
-        <div className="admin-login-header">
-          <div className="admin-brand-icon">🛡️</div>
-          <h1>Richway Executive</h1>
-          <p>Administration Portal Access</p>
-        </div>
+      {/* Decorative Background Elements */}
+      <div className="admin-glow-1"></div>
+      <div className="admin-glow-2"></div>
 
-        <form onSubmit={handleSubmit} className="admin-login-form">
-          {error && <div className="admin-error-message">{error}</div>}
-          
-          <div className="form-group">
-            <label>Master Email</label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@richway.com"
-              required 
-            />
+      <div className="admin-card-wrapper">
+        <div className="admin-login-card">
+          <div className="admin-login-header">
+            <div className="admin-brand-icon">🛡️</div>
+            <h1>Richway Executive</h1>
+            <p>Administration Portal Access</p>
           </div>
 
-          <div className="form-group">
-            <label>Security Key</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required 
-            />
+          <form onSubmit={handleSubmit} className="auth-form" style={{ marginTop: '24px' }}>
+            {error && <div className="error-msg">⚠ {error}</div>}
+            
+            <div className="form-group">
+              <label>Master Email</label>
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@richway.com"
+                required 
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Security Key</label>
+              <input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required 
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              className="btn-admin-login" 
+              disabled={isLoading}
+            >
+              {isLoading ? <span className="spinner" /> : 'Authorize Access'}
+            </button>
+          </form>
+
+          <div className="admin-login-footer">
+            <Link to="/">Back to Main Site</Link>
+            <span>v2.4.0 Secure Node</span>
           </div>
-
-          <button 
-            type="submit" 
-            className="btn-admin-login" 
-            disabled={isLoading}
-          >
-            {isLoading ? 'Verifying...' : 'Authorize Access'}
-          </button>
-        </form>
-
-        <div className="admin-login-footer">
-          <Link to="/">Back to Main Site</Link>
-          <span>v2.4.0 Secure Node</span>
         </div>
       </div>
-      <div className="admin-bg-ornament"></div>
     </div>
   );
 }

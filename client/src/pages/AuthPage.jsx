@@ -63,140 +63,146 @@ export default function AuthPage({ defaultRef, defaultTab }) {
 
   return (
     <div className="auth-bg">
-      <div className="auth-card">
-        {/* Logo / Brand */}
-        <div className="auth-brand">
-          <div className="brand-icon">🌿</div>
-          <h1 className="brand-name">Richway</h1>
-          <p className="brand-tagline">Premium Referral Network</p>
-        </div>
+      {/* Decorative Background Elements */}
+      <div className="auth-glow-1"></div>
+      <div className="auth-glow-2"></div>
 
-        {/* Tabs */}
-        <div className="auth-tabs">
-          <button
-            className={`tab-btn ${tab === 'signin' ? 'active' : ''}`}
-            onClick={() => { setTab('signin'); setError(''); }}
-          >
-            Sign In
-          </button>
-          <button
-            className={`tab-btn ${tab === 'signup' ? 'active' : ''}`}
-            onClick={() => { setTab('signup'); setError(''); }}
-          >
-            Sign Up
-          </button>
-        </div>
+      <div className="auth-card-wrapper">
+        <div className="auth-card">
+          {/* Logo / Brand */}
+          <div className="auth-brand">
+            <div className="brand-icon">🌿</div>
+            <h1 className="brand-name">Richway</h1>
+            <p className="brand-tagline">Premium Referral Network</p>
+          </div>
 
-        {/* Sign In Form */}
-        {tab === 'signin' && (
-          <form className="auth-form" onSubmit={handleLogin} noValidate>
-            <div className="form-group">
-              <label>Email <span className="required">*</span></label>
-              <input
-                name="email" type="email"
-                value={loginForm.email} onChange={handleLoginChange}
-                placeholder="john@example.com" required
-              />
-            </div>
-            <div className="form-group">
-              <label>Password <span className="required">*</span></label>
-              <input
-                name="password" type="password"
-                value={loginForm.password} onChange={handleLoginChange}
-                placeholder="Your password" required
-              />
-            </div>
-            {error && <div className="error-msg">⚠ {error}</div>}
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? <span className="spinner" /> : 'Sign In'}
+          {/* Tabs */}
+          <div className="auth-tabs">
+            <button
+              className={`tab-btn ${tab === 'signin' ? 'active' : ''}`}
+              onClick={() => { setTab('signin'); setError(''); }}
+            >
+              Sign In
             </button>
-            <p className="auth-switch">
-              Don't have an account?{' '}
-              <span onClick={() => { setTab('signup'); setError(''); }}>Sign Up</span>
-            </p>
-          </form>
-        )}
+            <button
+              className={`tab-btn ${tab === 'signup' ? 'active' : ''}`}
+              onClick={() => { setTab('signup'); setError(''); }}
+            >
+              Sign Up
+            </button>
+          </div>
 
-        {/* Sign Up Form */}
-        {tab === 'signup' && (
-          <form className="auth-form" onSubmit={handleRegister} noValidate>
-            <div className="form-row">
+          {/* Sign In Form */}
+          {tab === 'signin' && (
+            <form className="auth-form" onSubmit={handleLogin} noValidate>
               <div className="form-group">
-                <label>First Name <span className="required">*</span></label>
-                <input
-                  name="firstName" value={regForm.firstName}
-                  onChange={handleRegChange} placeholder="John" required
-                />
-              </div>
-              <div className="form-group">
-                <label>Last Name <span className="optional">(optional)</span></label>
-                <input
-                  name="lastName" value={regForm.lastName}
-                  onChange={handleRegChange} placeholder="Doe"
-                />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Email <span className="required">*</span></label>
+                <label>Email Address</label>
                 <input
                   name="email" type="email"
-                  value={regForm.email} onChange={handleRegChange}
+                  value={loginForm.email} onChange={handleLoginChange}
                   placeholder="john@example.com" required
                 />
               </div>
               <div className="form-group">
-                <label>Phone Number <span className="required">*</span></label>
-                <input
-                  name="phone" type="tel"
-                  value={regForm.phone} onChange={handleRegChange}
-                  placeholder="+91 98765 43210" required
-                />
-              </div>
-            </div>
-            <div className="form-group">
-              <label>Referral Code <span className="optional">(optional)</span></label>
-              <div className="input-with-badge">
-                <input
-                  name="referralCode"
-                  value={regForm.referralCode}
-                  onChange={handleRegChange}
-                  placeholder="e.g. ABC123"
-                  className={regForm.referralCode ? 'input-filled' : ''}
-                />
-                {regForm.referralCode && (
-                  <span className="referral-badge">✓ Applied</span>
-                )}
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Password <span className="required">*</span></label>
+                <label>Password</label>
                 <input
                   name="password" type="password"
-                  value={regForm.password} onChange={handleRegChange}
-                  placeholder="Min 6 characters" required
+                  value={loginForm.password} onChange={handleLoginChange}
+                  placeholder="Your password" required
                 />
+              </div>
+              {error && <div className="error-msg">⚠ {error}</div>}
+              <button type="submit" className="btn-primary" disabled={loading}>
+                {loading ? <span className="spinner" /> : 'Sign In'}
+              </button>
+              <p className="auth-switch">
+                Don't have an account?{' '}
+                <span onClick={() => { setTab('signup'); setError(''); }}>Sign Up</span>
+              </p>
+            </form>
+          )}
+
+          {/* Sign Up Form */}
+          {tab === 'signup' && (
+            <form className="auth-form" onSubmit={handleRegister} noValidate>
+              <div className="form-row">
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>First Name</label>
+                  <input
+                    name="firstName" value={regForm.firstName}
+                    onChange={handleRegChange} placeholder="John" required
+                  />
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>Last Name</label>
+                  <input
+                    name="lastName" value={regForm.lastName}
+                    onChange={handleRegChange} placeholder="Doe"
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>Email</label>
+                  <input
+                    name="email" type="email"
+                    value={regForm.email} onChange={handleRegChange}
+                    placeholder="john@example.com" required
+                  />
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>Phone Number</label>
+                  <input
+                    name="phone" type="tel"
+                    value={regForm.phone} onChange={handleRegChange}
+                    placeholder="+91 98765 43210" required
+                  />
+                </div>
               </div>
               <div className="form-group">
-                <label>Confirm Password <span className="required">*</span></label>
-                <input
-                  name="confirmPassword" type="password"
-                  value={regForm.confirmPassword} onChange={handleRegChange}
-                  placeholder="Re-enter password" required
-                />
+                <label>Referral Code (Optional)</label>
+                <div className="input-with-badge">
+                  <input
+                    name="referralCode"
+                    value={regForm.referralCode}
+                    onChange={handleRegChange}
+                    placeholder="e.g. ABC123"
+                    className={regForm.referralCode ? 'input-filled' : ''}
+                  />
+                  {regForm.referralCode && (
+                    <span className="referral-badge">✓ Applied</span>
+                  )}
+                </div>
               </div>
-            </div>
-            {error && <div className="error-msg">⚠ {error}</div>}
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? <span className="spinner" /> : 'Create Account'}
-            </button>
-            <p className="auth-switch">
-              Already have an account?{' '}
-              <span onClick={() => { setTab('signin'); setError(''); }}>Sign In</span>
-            </p>
-          </form>
-        )}
+              <div className="form-row">
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>Password</label>
+                  <input
+                    name="password" type="password"
+                    value={regForm.password} onChange={handleRegChange}
+                    placeholder="Min 6 characters" required
+                  />
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>Confirm</label>
+                  <input
+                    name="confirmPassword" type="password"
+                    value={regForm.confirmPassword} onChange={handleRegChange}
+                    placeholder="Re-enter" required
+                  />
+                </div>
+              </div>
+              {error && <div className="error-msg">⚠ {error}</div>}
+              <button type="submit" className="btn-primary" disabled={loading}>
+                {loading ? <span className="spinner" /> : 'Create Account'}
+              </button>
+              <p className="auth-switch">
+                Already have an account?{' '}
+                <span onClick={() => { setTab('signin'); setError(''); }}>Sign In</span>
+              </p>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );
