@@ -488,6 +488,8 @@
   font-size: 0.7rem;
   font-family: monospace;
 }
+
+.btn-secondary {
   background: transparent;
   border: 1px solid var(--bg-dark-700);
   color: var(--text-muted);
