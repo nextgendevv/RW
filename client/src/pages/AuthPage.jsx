@@ -39,13 +39,10 @@ export default function AuthPage({ defaultRef, defaultTab }) {
     setError('');
     try {
       const userData = await login(loginForm.email, loginForm.password);
-      // If login returns user data directly, use it, otherwise use the state (though state update might be async)
-      // Actually AuthContext login sets the user. Let's assume we can check it or just rely on the redirect logic if we had it elsewhere.
-      // But here we need to know WHERE to navigate right now.
-      
-      // Let's modify login to return the user
       if (userData && userData.role === 'admin') {
-        navigate('/admin/dashboard');
+        // Admin shouldn't login via user portal
+        logout();
+        setError('Admin accounts must use the admin portal to login.');
       } else {
         navigate('/dashboard');
       }
@@ -63,7 +60,8 @@ export default function AuthPage({ defaultRef, defaultTab }) {
     try {
       const userData = await register(regForm);
       if (userData && userData.role === 'admin') {
-        navigate('/admin/dashboard');
+        logout();
+        setError('Admin accounts must use the admin portal.');
       } else {
         navigate('/dashboard');
       }

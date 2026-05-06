@@ -17,36 +17,33 @@ import ProtectedLayout from './layouts/ProtectedLayout';
 import AdminLayout from './layouts/AdminLayout';
 
 function AdminRoute({ children }) {
-  const { user, loading } = useAuth();
-  if (loading) return <div className="loading-screen"><div className="loading-spinner" /></div>;
-  if (!user) return <Navigate to="/admin/login" replace />;
-  if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
+  const { adminUser, adminLoading } = useAuth();
+  if (adminLoading) return <div className="loading-screen"><div className="loading-spinner" /></div>;
+  if (!adminUser) return <Navigate to="/admin/login" replace />;
   return children;
 }
 
 // Handles ?ref= param — redirect to auth page with the ref preserved
 function RootRedirect() {
-  const { user, loading } = useAuth();
+  const { user, adminUser, loading, adminLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const ref = searchParams.get('ref');
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !adminLoading) {
       if (user) {
-        if (user.role === 'admin') {
-          navigate('/admin/dashboard', { replace: true });
-        } else {
-          navigate('/dashboard', { replace: true });
-        }
+        navigate('/dashboard', { replace: true });
+      } else if (adminUser) {
+        navigate('/admin/dashboard', { replace: true });
       } else if (ref) {
         navigate(`/auth?ref=${ref}`, { replace: true });
       }
     }
-  }, [loading, user, ref, navigate]);
+  }, [loading, adminLoading, user, adminUser, ref, navigate]);
 
-  if (loading) return <div className="loading-screen"><div className="loading-spinner" /></div>;
-  if (user) return null;
+  if (loading || adminLoading) return <div className="loading-screen"><div className="loading-spinner" /></div>;
+  if (user || adminUser) return null;
   return <HomePage />;
 }
 
@@ -60,8 +57,7 @@ function AuthPageWithRef() {
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="loading-screen"><div className="loading-spinner" /></div>;
-  if (!user) return <Navigate to="/" replace />;
-  if (user.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
+  if (!user) return <Navigate to="/auth" replace />;
   return children;
 }
 

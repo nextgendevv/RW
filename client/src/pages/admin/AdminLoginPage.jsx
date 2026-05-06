@@ -9,14 +9,14 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const { login, user } = useAuth();
+  const { adminLogin, adminUser } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user && user.role === 'admin') {
+    if (adminUser) {
       navigate('/admin/dashboard');
     }
-  }, [user, navigate]);
+  }, [adminUser, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,10 +24,10 @@ export default function AdminLoginPage() {
     setError('');
     
     try {
-      await login(email, password);
-      // The useEffect above will handle redirection if it's an admin
+      await adminLogin(email, password);
+      // Success will trigger useEffect above
     } catch (err) {
-      setError(err.response?.data?.message || 'Authentication failed');
+      setError(err.message || 'Authentication failed');
       setIsLoading(false);
     }
   };

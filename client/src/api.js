@@ -5,7 +5,15 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
+  let tokenKey = 'token';
+  if (config.url.includes('/admin')) {
+    tokenKey = 'admin_token';
+  } else if (config.headers['X-Auth-Token-Key']) {
+    tokenKey = config.headers['X-Auth-Token-Key'];
+    delete config.headers['X-Auth-Token-Key'];
+  }
+  
+  const token = localStorage.getItem(tokenKey);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
