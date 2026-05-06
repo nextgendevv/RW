@@ -2,12 +2,12 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function AdminSidebar({ isOpen, onClose }) {
-  const { user, logout } = useAuth();
+  const { adminUser, adminLogout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
-    navigate('/');
+    adminLogout();
+    navigate('/admin/login');
   };
 
   const handleLinkClick = () => {
@@ -26,7 +26,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
       
       <div className="sidebar-user">
         <div className="admin-status">Admin Access</div>
-        <p>{user?.firstName} {user?.lastName}</p>
+        <p>{adminUser?.firstName} {adminUser?.lastName}</p>
       </div>
 
       <nav className="sidebar-nav">
