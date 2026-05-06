@@ -19,7 +19,8 @@ import AdminLayout from './layouts/AdminLayout';
 function AdminRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="loading-screen"><div className="loading-spinner" /></div>;
-  if (!user || user.role !== 'admin') return <Navigate to="/dashboard" replace />;
+  if (!user) return <Navigate to="/admin/login" replace />;
+  if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
   return children;
 }
 
@@ -33,7 +34,11 @@ function RootRedirect() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        navigate('/dashboard', { replace: true });
+        if (user.role === 'admin') {
+          navigate('/admin/dashboard', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
       } else if (ref) {
         navigate(`/auth?ref=${ref}`, { replace: true });
       }
@@ -55,7 +60,9 @@ function AuthPageWithRef() {
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="loading-screen"><div className="loading-spinner" /></div>;
-  return user ? children : <Navigate to="/" replace />;
+  if (!user) return <Navigate to="/" replace />;
+  if (user.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
+  return children;
 }
 
 export default function App() {

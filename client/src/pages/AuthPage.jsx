@@ -38,8 +38,17 @@ export default function AuthPage({ defaultRef, defaultTab }) {
     setLoading(true);
     setError('');
     try {
-      await login(loginForm.email, loginForm.password);
-      navigate('/dashboard');
+      const userData = await login(loginForm.email, loginForm.password);
+      // If login returns user data directly, use it, otherwise use the state (though state update might be async)
+      // Actually AuthContext login sets the user. Let's assume we can check it or just rely on the redirect logic if we had it elsewhere.
+      // But here we need to know WHERE to navigate right now.
+      
+      // Let's modify login to return the user
+      if (userData && userData.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid email or password.');
     } finally {
@@ -52,8 +61,12 @@ export default function AuthPage({ defaultRef, defaultTab }) {
     setLoading(true);
     setError('');
     try {
-      await register(regForm);
-      navigate('/dashboard');
+      const userData = await register(regForm);
+      if (userData && userData.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed.');
     } finally {

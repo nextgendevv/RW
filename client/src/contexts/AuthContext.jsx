@@ -38,7 +38,9 @@ export function AuthProvider({ children }) {
     } else {
       const userResponse = await api.get('/auth/me');
       setUser(userResponse.data);
+      return userResponse.data;
     }
+    return response.data.user;
   };
 
   const register = async (userData) => {
@@ -49,7 +51,9 @@ export function AuthProvider({ children }) {
     } else {
       const userResponse = await api.get('/auth/me');
       setUser(userResponse.data);
+      return userResponse.data;
     }
+    return response.data.user;
   };
 
   const logout = () => {
