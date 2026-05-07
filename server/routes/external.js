@@ -29,7 +29,9 @@ router.get('/verify', async (req, res) => {
     res.json({
       isRichwayUser: true,
       hasSubscription: user.subscription === true,
-      username: user.firstName
+      hasPaidMembership: user.subscription === true,
+      username: user.firstName,
+      subscriptionPlan: user.subscriptionPlan || 'none'
     });
   } catch (err) {
     console.error('EXTERNAL_VERIFY_ERROR:', err);
@@ -66,10 +68,21 @@ router.post('/verify-login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid credentials' });
     }
 
+    // Only grant access if user has a paid subscription
+    if (!user.subscription) {
+      return res.status(403).json({
+        success: false,
+        message: 'No active subscription. Please subscribe on Richway to access NetFX.',
+        hasPaidMembership: false
+      });
+    }
+
     res.json({
       success: true,
       username: user.firstName,
-      isPremium: user.subscription === true
+      isPremium: true,
+      hasPaidMembership: true,
+      subscriptionPlan: user.subscriptionPlan || 'none'
     });
   } catch (err) {
     console.error('EXTERNAL_LOGIN_ERROR:', err);
