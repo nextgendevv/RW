@@ -46,7 +46,8 @@ app.use(express.json());
 // 2. API ROUTES IMMEDIATELY AFTER JSON PARSER
 app.use('/api/auth', authRoutes);
 app.use('/api/teams', teamRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/support', require('./routes/support'));
 app.use('/api/streaming', streamingRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/external', externalRoutes);

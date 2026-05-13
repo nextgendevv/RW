@@ -128,7 +128,7 @@ router.get('/me', authMiddleware, async (req, res) => {
 // @desc    Update user profile
 // @access  Private
 router.put('/me', authMiddleware, async (req, res) => {
-  const { firstName, lastName, phone } = req.body;
+  const { firstName, lastName, phone, bankName, accountNumber, ifscCode, accountHolderName } = req.body;
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
@@ -136,6 +136,12 @@ router.put('/me', authMiddleware, async (req, res) => {
     if (firstName) user.firstName = firstName;
     if (lastName !== undefined) user.lastName = lastName;
     if (phone) user.phone = phone;
+    
+    // Bank Details
+    if (bankName !== undefined) user.bankName = bankName;
+    if (accountNumber !== undefined) user.accountNumber = accountNumber;
+    if (ifscCode !== undefined) user.ifscCode = ifscCode;
+    if (accountHolderName !== undefined) user.accountHolderName = accountHolderName;
 
     await user.save();
     const updatedUser = await User.findById(req.user.id).select('-password');

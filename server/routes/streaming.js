@@ -4,6 +4,20 @@ const User = require('../models/User');
 const authMiddleware = require('../middleware/auth');
 const axios = require('axios');
 const { syncToNetX } = require('../utils/sync');
+const Package = require('../models/Package');
+
+// @route   GET /api/streaming/packages
+// @desc    Get all active packages for users
+// @access  Public
+router.get('/packages', async (req, res) => {
+  try {
+    const packages = await Package.find({ isActive: true }).sort({ price: 1 });
+    res.json(packages);
+  } catch (err) {
+    console.error('GET_PACKAGES_ERROR:', err);
+    res.status(500).json({ message: 'Server error while fetching packages.' });
+  }
+});
 
 // @route   POST /api/streaming/sync-access
 // @desc    Sync user with the partner streaming website
@@ -54,18 +68,17 @@ router.post('/sync-access', authMiddleware, async (req, res) => {
 // @access  Private
 router.post('/subscribe', authMiddleware, async (req, res) => {
   try {
-    const { plan } = req.body;
+    const { packageId } = req.body;
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Plan prices
-    const prices = {
-      '1_month': 99,
-      '1_year': 499,
-      '5_years': 1999
-    };
+    const pkg = await Package.findById(packageId);
+    if (!pkg || !pkg.isActive) {
+      return res.status(400).json({ message: 'Invalid or inactive package selected.' });
+    }
 
-    const price = prices[plan] || 499;
+    const price = pkg.price;
+    const plan = pkg.key;
     
     // Check if user has enough balance
     if ((user.walletBalance || 0) < price) {

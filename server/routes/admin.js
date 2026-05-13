@@ -28,20 +28,85 @@ router.get('/stats', [auth, admin], async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
     
-    // Distribution of users by role
-    const roleStats = await User.aggregate([
-      { $group: { _id: '$role', count: { $sum: 1 } } }
+    // Date ranges
+    const now = new Date();
+    const todayStart = new Date(now.setHours(0,0,0,0));
+    
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    const yesterdayEnd = new Date(todayStart);
+
+    const sevenDaysAgo = new Date(todayStart);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const usersToday = await User.countDocuments({ createdAt: { $gte: todayStart } });
+    const usersYesterday = await User.countDocuments({ createdAt: { $gte: yesterdayStart, $lt: yesterdayEnd } });
+    const newUsersLast7Days = await User.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
+
+    // Financial Stats
+    const deposits = await Deposit.find({ status: 'approved' });
+    const totalRevenue = deposits.reduce((sum, dep) => sum + dep.amount, 0);
+
+    const Commission = require('../models/Commission');
+    const commissions = await Commission.find();
+    const totalCommissions = commissions.reduce((sum, com) => sum + com.amount, 0);
+    const pendingCommissions = commissions.filter(c => c.status === 'pending').reduce((sum, com) => sum + com.amount, 0);
+
+    // Daily Stats for Chart (Last 14 days)
+    const fourteenDaysAgo = new Date(todayStart);
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+    const dailyUsers = await User.aggregate([
+      { $match: { createdAt: { $gte: fourteenDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
     ]);
 
-    // New users in last 7 days
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const newUsers = await User.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
+    const dailyRevenue = await Deposit.aggregate([
+      { $match: { status: 'approved', createdAt: { $gte: fourteenDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          amount: { $sum: "$amount" }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Merge stats into a consistent array for the chart
+    const chartData = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(todayStart);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      
+      const userStat = dailyUsers.find(u => u._id === dateStr);
+      const revStat = dailyRevenue.find(r => r._id === dateStr);
+      
+      chartData.push({
+        date: dateStr,
+        users: userStat ? userStat.count : 0,
+        revenue: revStat ? revStat.amount : 0
+      });
+    }
 
     res.json({
       totalUsers,
-      roleStats,
-      newUsersLast7Days: newUsers
+      usersToday,
+      usersYesterday,
+      newUsersLast7Days,
+      totalRevenue,
+      totalCommissions,
+      pendingCommissions,
+      activeUsers: await User.countDocuments({ subscription: true }),
+      inactiveUsers: await User.countDocuments({ subscription: false }),
+      chartData,
+      roleStats: await User.aggregate([{ $group: { _id: '$role', count: { $sum: 1 } } }])
     });
   } catch (err) {
     console.error('ADMIN_GET_STATS_ERROR:', err);
@@ -217,10 +282,10 @@ router.put('/commissions/:id/pay', [auth, admin], async (req, res) => {
     commission.status = 'paid';
     await commission.save();
 
-    // Credit the recipient's wallet
+    // Credit the recipient's main wallet
     const recipient = await User.findById(commission.recipient);
     if (recipient) {
-      recipient.walletBalance = (recipient.walletBalance || 0) + commission.amount;
+      recipient.mainWalletBalance = (recipient.mainWalletBalance || 0) + commission.amount;
       await recipient.save();
     }
 
@@ -228,6 +293,198 @@ router.put('/commissions/:id/pay', [auth, admin], async (req, res) => {
   } catch (err) {
     console.error('ADMIN_PAY_COMMISSION_ERROR:', err);
     res.status(500).json({ message: 'Server error while giving commission.' });
+  }
+});
+
+// @route   GET /api/admin/packages
+// @desc    Get all packages
+// @access  Private/Admin
+router.get('/packages', [auth, admin], async (req, res) => {
+  try {
+    const Package = require('../models/Package');
+    const packages = await Package.find().sort({ price: 1 });
+    res.json(packages);
+  } catch (err) {
+    console.error('ADMIN_GET_PACKAGES_ERROR:', err);
+    res.status(500).json({ message: 'Server error while fetching packages.' });
+  }
+});
+
+// @route   POST /api/admin/packages
+// @desc    Create a new package
+// @access  Private/Admin
+router.post('/packages', [auth, admin], async (req, res) => {
+  try {
+    const { name, key, price, originalPrice, discountPercentage, durationInDays, description, features, isActive } = req.body;
+    const Package = require('../models/Package');
+    
+    let pkg = await Package.findOne({ key });
+    if (pkg) return res.status(400).json({ message: 'Package with this key already exists.' });
+
+    pkg = new Package({ name, key, price, originalPrice, discountPercentage, durationInDays, description, features, isActive });
+    await pkg.save();
+    res.json(pkg);
+  } catch (err) {
+    console.error('ADMIN_CREATE_PACKAGE_ERROR:', err);
+    res.status(500).json({ message: 'Server error while creating package.' });
+  }
+});
+
+// @route   PUT /api/admin/packages/:id
+// @desc    Update a package
+// @access  Private/Admin
+router.put('/packages/:id', [auth, admin], async (req, res) => {
+  try {
+    const { name, key, price, originalPrice, discountPercentage, durationInDays, description, features, isActive } = req.body;
+    const Package = require('../models/Package');
+    
+    let pkg = await Package.findById(req.params.id);
+    if (!pkg) return res.status(404).json({ message: 'Package not found' });
+
+    if (name) pkg.name = name;
+    if (key) pkg.key = key;
+    if (price !== undefined) pkg.price = price;
+    if (originalPrice !== undefined) pkg.originalPrice = originalPrice;
+    if (discountPercentage !== undefined) pkg.discountPercentage = discountPercentage;
+    if (durationInDays !== undefined) pkg.durationInDays = durationInDays;
+    if (description !== undefined) pkg.description = description;
+    if (features !== undefined) pkg.features = features;
+    if (isActive !== undefined) pkg.isActive = isActive;
+
+    await pkg.save();
+    res.json(pkg);
+  } catch (err) {
+    console.error('ADMIN_UPDATE_PACKAGE_ERROR:', err);
+    res.status(500).json({ message: 'Server error while updating package.' });
+  }
+});
+
+// @route   DELETE /api/admin/packages/:id
+// @desc    Delete a package
+// @access  Private/Admin
+router.delete('/packages/:id', [auth, admin], async (req, res) => {
+  try {
+    const Package = require('../models/Package');
+    await Package.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Package deleted successfully' });
+  } catch (err) {
+    console.error('ADMIN_DELETE_PACKAGE_ERROR:', err);
+    res.status(500).json({ message: 'Server error while deleting package.' });
+  }
+});
+
+// @route   GET /api/admin/withdrawals
+// @desc    Get all withdrawal requests
+// @access  Private/Admin
+router.get('/withdrawals', [auth, admin], async (req, res) => {
+  try {
+    const Withdrawal = require('../models/Withdrawal');
+    const withdrawals = await Withdrawal.find().populate('user', 'firstName lastName email').sort({ createdAt: -1 });
+    res.json(withdrawals);
+  } catch (err) {
+    console.error('ADMIN_GET_WITHDRAWALS_ERROR:', err);
+    res.status(500).json({ message: 'Server error while fetching withdrawals.' });
+  }
+});
+
+// @route   PUT /api/admin/withdrawals/:id/:action
+// @desc    Approve or reject a withdrawal
+// @access  Private/Admin
+router.put('/withdrawals/:id/:action', [auth, admin], async (req, res) => {
+  try {
+    const { action } = req.params; // 'approve' or 'reject'
+    const { adminMessage } = req.body;
+    const Withdrawal = require('../models/Withdrawal');
+    const withdrawal = await Withdrawal.findById(req.params.id);
+    
+    if (!withdrawal) return res.status(404).json({ message: 'Withdrawal request not found' });
+    if (withdrawal.status !== 'pending') return res.status(400).json({ message: 'Withdrawal is already ' + withdrawal.status });
+
+    if (action === 'approve') {
+      withdrawal.status = 'approved';
+      withdrawal.adminMessage = adminMessage || 'Withdrawal approved and processed.';
+      await withdrawal.save();
+    } else if (action === 'reject') {
+      withdrawal.status = 'rejected';
+      withdrawal.adminMessage = adminMessage || 'Withdrawal rejected.';
+      await withdrawal.save();
+      
+      // Refund the amount to main wallet
+      const user = await User.findById(withdrawal.user);
+      if (user) {
+        user.mainWalletBalance = (user.mainWalletBalance || 0) + withdrawal.amount;
+        await user.save();
+      }
+    } else {
+      return res.status(400).json({ message: 'Invalid action' });
+    }
+
+    res.json({ message: `Withdrawal ${action}d successfully.`, withdrawal });
+  } catch (err) {
+    console.error('ADMIN_WITHDRAWAL_ACTION_ERROR:', err);
+    res.status(500).json({ message: 'Server error while processing withdrawal.' });
+  }
+});
+
+// @route   GET /api/admin/support/tickets
+// @desc    Get all support tickets
+// @access  Private/Admin
+router.get('/support/tickets', [auth, admin], async (req, res) => {
+  try {
+    const SupportTicket = require('../models/SupportTicket');
+    const tickets = await SupportTicket.find()
+      .populate('user', 'firstName lastName email')
+      .sort({ updatedAt: -1 });
+    res.json(tickets);
+  } catch (err) {
+    console.error('ADMIN_GET_TICKETS_ERROR:', err);
+    res.status(500).json({ message: 'Server error while fetching tickets' });
+  }
+});
+
+// @route   POST /api/admin/support/tickets/:id/reply
+// @desc    Admin reply to a ticket
+// @access  Private/Admin
+router.post('/support/tickets/:id/reply', [auth, admin], async (req, res) => {
+  try {
+    const { message, status } = req.body;
+    const SupportTicket = require('../models/SupportTicket');
+    const ticket = await SupportTicket.findById(req.params.id);
+    
+    if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
+
+    ticket.replies.push({
+      sender: 'admin',
+      message
+    });
+    
+    if (status) ticket.status = status;
+    else ticket.status = 'in-progress';
+
+    await ticket.save();
+    res.json(ticket);
+  } catch (err) {
+    console.error('ADMIN_REPLY_TICKET_ERROR:', err);
+    res.status(500).json({ message: 'Server error while replying to ticket' });
+  }
+});
+
+// @route   PUT /api/admin/support/tickets/:id/status
+// @desc    Update ticket status
+// @access  Private/Admin
+router.put('/support/tickets/:id/status', [auth, admin], async (req, res) => {
+  try {
+    const { status } = req.body;
+    const SupportTicket = require('../models/SupportTicket');
+    const ticket = await SupportTicket.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    res.json(ticket);
+  } catch (err) {
+    console.error('ADMIN_STATUS_TICKET_ERROR:', err);
+    res.status(500).json({ message: 'Server error while updating ticket status' });
   }
 });
 

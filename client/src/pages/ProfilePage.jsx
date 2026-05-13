@@ -13,7 +13,8 @@ import {
   ShieldCheck, 
   HelpCircle,
   LogOut,
-  Settings
+  Settings,
+  Bank
 } from '../components/Icons';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -21,22 +22,55 @@ export default function ProfilePage() {
   const { user, logout, updateProfile } = useAuth();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '' });
+  const [form, setForm] = useState({ 
+    firstName: '', 
+    lastName: '', 
+    phone: '',
+    bankName: '',
+    accountNumber: '',
+    ifscCode: '',
+    accountHolderName: ''
+  });
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
   const [copied, setCopied] = useState(false);
 
-  const [wallet, setWallet] = useState({ deposits: [], balance: 0 });
+  const [wallet, setWallet] = useState({ deposits: [], balance: 0, mainBalance: 0, withdrawals: [] });
   const [depositForm, setDepositForm] = useState({ amount: '', utrNumber: '' });
+  const [withdrawForm, setWithdrawForm] = useState({ amount: '' });
   const [depositMsg, setDepositMsg] = useState('');
+  const [withdrawMsg, setWithdrawMsg] = useState('');
   const [depositing, setDepositing] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [packages, setPackages] = useState([]);
+  const [loadingPackages, setLoadingPackages] = useState(true);
+
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        const api = (await import('../api')).default;
+        const res = await api.get('/streaming/packages');
+        setPackages(res.data);
+      } catch (err) {
+        console.error('Failed to fetch packages', err);
+      } finally {
+        setLoadingPackages(false);
+      }
+    };
+    fetchPackages();
+  }, []);
 
   useEffect(() => {
     const fetchWallet = async () => {
       try {
         const api = (await import('../api')).default;
-        const res = await api.get('/wallet/deposits');
-        setWallet(res.data);
+        const res = await api.get('/wallet/summary');
+        setWallet({
+          deposits: res.data.deposits,
+          balance: res.data.depositBalance,
+          mainBalance: res.data.mainBalance,
+          withdrawals: res.data.withdrawals
+        });
       } catch (err) {
         console.error('Failed to fetch wallet', err);
       }
@@ -51,14 +85,40 @@ export default function ProfilePage() {
     try {
       const api = (await import('../api')).default;
       const res = await api.post('/wallet/deposit', depositForm);
-      setDepositMsg('Deposit requested successfully! Waiting for admin approval.');
+      setDepositMsg('Deposit request submitted! Waiting for admin approval.');
       setDepositForm({ amount: '', utrNumber: '' });
       setWallet(prev => ({ ...prev, deposits: [res.data.deposit, ...prev.deposits] }));
     } catch (err) {
-      setDepositMsg(err.response?.data?.message || 'Error requesting deposit');
+      setDepositMsg(err.response?.data?.message || 'Error submitting deposit');
     } finally {
       setDepositing(false);
       setTimeout(() => setDepositMsg(''), 5000);
+    }
+  };
+
+  const handleWithdrawSubmit = async (e) => {
+    e.preventDefault();
+    if (!user.bankName || !user.accountNumber) {
+      setWithdrawMsg('Please update your bank details in profile before withdrawing.');
+      return;
+    }
+    setWithdrawing(true);
+    setWithdrawMsg('');
+    try {
+      const api = (await import('../api')).default;
+      const res = await api.post('/wallet/withdraw', withdrawForm);
+      setWithdrawMsg('Withdrawal requested successfully! Waiting for admin approval.');
+      setWithdrawForm({ amount: '' });
+      setWallet(prev => ({ 
+        ...prev, 
+        mainBalance: res.data.newMainBalance,
+        withdrawals: [res.data.withdrawal, ...prev.withdrawals] 
+      }));
+    } catch (err) {
+      setWithdrawMsg(err.response?.data?.message || 'Error requesting withdrawal');
+    } finally {
+      setWithdrawing(false);
+      setTimeout(() => setWithdrawMsg(''), 5000);
     }
   };
 
@@ -70,9 +130,10 @@ export default function ProfilePage() {
     if (!user) return 0;
     let score = 0;
     if (user.firstName) score += 25;
-    if (user.lastName) score += 25;
-    if (user.phone) score += 25;
-    if (user.email) score += 25;
+    if (user.lastName) score += 20;
+    if (user.phone) score += 20;
+    if (user.email) score += 20;
+    if (user.bankName && user.accountNumber) score += 20;
     return score;
   }, [user]);
 
@@ -82,7 +143,15 @@ export default function ProfilePage() {
   };
 
   const startEdit = () => {
-    setForm({ firstName: user.firstName, lastName: user.lastName || '', phone: user.phone });
+    setForm({ 
+      firstName: user.firstName, 
+      lastName: user.lastName || '', 
+      phone: user.phone || '',
+      bankName: user.bankName || '',
+      accountNumber: user.accountNumber || '',
+      ifscCode: user.ifscCode || '',
+      accountHolderName: user.accountHolderName || ''
+    });
     setEditing(true);
     setSaveMsg('');
   };
@@ -128,10 +197,13 @@ export default function ProfilePage() {
 
     try {
       setSaving(true);
-      const planName = plan === '1_month' ? '1 Month' : (plan === '1_year' ? '1 Year' : '5 Years');
-      setSaveMsg(`Processing ${planName} subscription...`);
+      const pkg = packages.find(p => p.key === plan);
+      if (!pkg) throw new Error('Package not found');
+      
+      const planDisplayName = pkg.name;
+      setSaveMsg(`Processing ${planDisplayName} subscription...`);
       const api = (await import('../api')).default;
-      const res = await api.post('/streaming/subscribe', { plan });
+      const res = await api.post('/streaming/subscribe', { packageId: pkg._id });
       if (res.data.success) {
         setSaveMsg('Subscription successful! Refreshing...');
         setTimeout(() => window.location.reload(), 1500);
@@ -212,6 +284,25 @@ export default function ProfilePage() {
                   <div className="value">{user.phone || 'Not set'}</div>
                 </div>
               </div>
+
+              {/* Bank Details Display */}
+              <div className="info-item" style={{display: 'flex', alignItems: 'center', gap: '12px', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.05)'}}>
+                <Bank size={18} className="text-dim" />
+                <div style={{flex: 1}}>
+                  <label>Bank Account</label>
+                  <div className="value" style={{fontSize: '0.85rem'}}>
+                    {user.bankName ? (
+                      <>
+                        <div style={{fontWeight: 600}}>{user.bankName}</div>
+                        <div className="text-dim">{user.accountNumber}</div>
+                        <div className="text-dim" style={{fontSize: '0.75rem'}}>{user.ifscCode}</div>
+                      </>
+                    ) : (
+                      <span className="text-dim">Not provided</span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -227,48 +318,85 @@ export default function ProfilePage() {
                 </div>
                 <p>Manage your funds and deposit history</p>
               </div>
-              <div className="wallet-balance-box">
-                <span className="label">Available Balance</span>
-                <span className="value">₹{wallet.balance}</span>
+              
+              <div style={{display: 'flex', gap: '15px'}}>
+                <div className="wallet-balance-box">
+                  <span className="label">Deposit Wallet</span>
+                  <span className="value">₹{wallet.balance}</span>
+                </div>
+                <div className="wallet-balance-box" style={{background: 'linear-gradient(135deg, #1DB954 0%, #15803d 100%)'}}>
+                  <span className="label" style={{color: 'rgba(255,255,255,0.8)'}}>Main Wallet (Earnings)</span>
+                  <span className="value" style={{color: '#fff'}}>₹{wallet.mainBalance}</span>
+                </div>
               </div>
             </div>
 
-            <div className="deposit-section-premium">
-              <form onSubmit={handleDepositSubmit} className="deposit-form-modern">
-                <h4>Quick Deposit</h4>
-                <div className="deposit-input-grid">
-                  <div className="form-group">
-                    <label>Amount (₹)</label>
-                    <input type="number" required value={depositForm.amount} onChange={e => setDepositForm({...depositForm, amount: e.target.value})} min="1" placeholder="0.00" />
+            <div className="wallet-actions-grid" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', padding: '0 30px 30px'}}>
+              <div className="deposit-section-premium" style={{padding: 0}}>
+                <form onSubmit={handleDepositSubmit} className="deposit-form-modern">
+                  <h4>Quick Deposit</h4>
+                  <div className="deposit-input-grid" style={{gridTemplateColumns: '1fr'}}>
+                    <div className="form-group">
+                      <label>Amount (₹)</label>
+                      <input type="number" required value={depositForm.amount} onChange={e => setDepositForm({...depositForm, amount: e.target.value})} min="1" placeholder="0.00" />
+                    </div>
+                    <div className="form-group">
+                      <label>UTR Number</label>
+                      <input type="text" required value={depositForm.utrNumber} onChange={e => setDepositForm({...depositForm, utrNumber: e.target.value})} placeholder="Transaction ID" />
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label>UTR Number</label>
-                    <input type="text" required value={depositForm.utrNumber} onChange={e => setDepositForm({...depositForm, utrNumber: e.target.value})} placeholder="Transaction ID" />
+                  <button type="submit" className="btn-primary" disabled={depositing} style={{width: '100%'}}>
+                    {depositing ? 'Processing...' : 'Deposit Funds'}
+                  </button>
+                  {depositMsg && <div className="form-feedback-floating">{depositMsg}</div>}
+                </form>
+              </div>
+
+              <div className="withdraw-section-premium">
+                <form onSubmit={handleWithdrawSubmit} className="deposit-form-modern" style={{background: 'rgba(29, 185, 84, 0.05)', borderColor: 'rgba(29, 185, 84, 0.2)'}}>
+                  <h4 style={{color: '#1DB954'}}>Withdraw Earnings</h4>
+                  <div className="deposit-input-grid" style={{gridTemplateColumns: '1fr'}}>
+                    <div className="form-group">
+                      <label>Amount to Withdraw (₹)</label>
+                      <input type="number" required value={withdrawForm.amount} onChange={e => setWithdrawForm({...withdrawForm, amount: e.target.value})} min="1" placeholder="0.00" />
+                    </div>
+                    <div style={{fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '-10px'}}>
+                      Funds will be sent to your registered bank account.
+                    </div>
                   </div>
-                </div>
-                <button type="submit" className="btn-primary" disabled={depositing}>
-                  {depositing ? 'Processing...' : 'Submit Deposit Request'}
-                </button>
-                {depositMsg && <div className="form-feedback-floating">{depositMsg}</div>}
-              </form>
+                  <button type="submit" className="btn-primary" disabled={withdrawing} style={{width: '100%', background: '#1DB954'}}>
+                    {withdrawing ? 'Processing...' : 'Withdraw to Bank'}
+                  </button>
+                  {withdrawMsg && <div className="form-feedback-floating" style={{color: '#1DB954', background: 'rgba(29, 185, 84, 0.1)'}}>{withdrawMsg}</div>}
+                </form>
+              </div>
             </div>
 
-            <div className="deposit-history-premium">
-              <h4 className="section-subtitle">Recent Transactions</h4>
-              <div className="history-table-mini">
-                {wallet.deposits.length === 0 ? <p className="empty-history">No history found.</p> : null}
-                {wallet.deposits.map(dep => (
-                  <div key={dep._id} className="history-row-item">
+            <div className="deposit-history-premium" style={{paddingTop: 0}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
+                <h4 className="section-subtitle" style={{margin: 0}}>Transaction History</h4>
+                <div style={{display: 'flex', gap: '10px', fontSize: '0.8rem'}}>
+                   <span className="text-dim">Latest activity</span>
+                </div>
+              </div>
+              <div className="history-table-mini" style={{maxHeight: '300px'}}>
+                {[...wallet.deposits.map(d => ({...d, type: 'deposit'})), ...wallet.withdrawals.map(w => ({...w, type: 'withdrawal'}))]
+                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                  .map((item, idx) => (
+                  <div key={item._id || idx} className="history-row-item">
                     <div className="row-info">
-                      <span className="amount">₹{dep.amount}</span>
-                      <span className="utr">{dep.utrNumber}</span>
+                      <span className="amount" style={{color: item.type === 'withdrawal' ? '#ef4444' : '#1DB954'}}>
+                        {item.type === 'withdrawal' ? '-' : '+'}₹{item.amount}
+                      </span>
+                      <span className="utr">{item.type === 'withdrawal' ? 'Withdrawal' : item.utrNumber}</span>
                     </div>
                     <div className="row-meta">
-                      <span className={`status-badge-compact ${dep.status}`}>{dep.status}</span>
-                      <span className="date">{new Date(dep.createdAt).toLocaleDateString()}</span>
+                      <span className={`status-badge-compact ${item.status}`}>{item.status}</span>
+                      <span className="date">{new Date(item.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
                 ))}
+                {wallet.deposits.length === 0 && wallet.withdrawals.length === 0 ? <p className="empty-history">No history found.</p> : null}
               </div>
             </div>
           </div>
@@ -296,21 +424,21 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className="plan-selection">
-                  <div className="plan-item" onClick={() => handleSubscribe('1_month')}>
-                    <span className="plan-name">1 Month</span>
-                    <span className="plan-price">₹99</span>
-                    <button className="btn-plan-select">Select</button>
-                  </div>
-                  <div className="plan-item featured" onClick={() => handleSubscribe('1_year')}>
-                    <span className="plan-name">1 Year</span>
-                    <span className="plan-price">₹499</span>
-                    <button className="btn-plan-select">Select</button>
-                  </div>
-                  <div className="plan-item" onClick={() => handleSubscribe('5_years')}>
-                    <span className="plan-name">5 Years</span>
-                    <span className="plan-price">₹1999</span>
-                    <button className="btn-plan-select">Select</button>
-                  </div>
+                  {loadingPackages ? (
+                    <div className="loading-spinner-small" />
+                  ) : (
+                    packages.map(pkg => (
+                      <div key={pkg._id} className={`plan-item ${pkg.key === '1_year' ? 'featured' : ''}`} onClick={() => handleSubscribe(pkg.key)}>
+                        {pkg.discountPercentage && <div className="plan-offer-badge">{pkg.discountPercentage}% OFF</div>}
+                        <span className="plan-name">{pkg.name}</span>
+                        <div className="plan-price-group">
+                           {pkg.originalPrice && <span className="original-price">₹{pkg.originalPrice}</span>}
+                           <span className="plan-price">₹{pkg.price}</span>
+                        </div>
+                        <button className="btn-plan-select">Select</button>
+                      </div>
+                    ))
+                  )}
                 </div>
                 {saveMsg && <div className="form-feedback" style={{marginTop: '15px'}}>{saveMsg}</div>}
               </div>
@@ -414,6 +542,28 @@ export default function ProfilePage() {
                 <div className="form-group full-width">
                   <label>Phone Number</label>
                   <input name="phone" value={form.phone} onChange={handleChange} required />
+                </div>
+
+                {/* Bank Details Section */}
+                <div className="form-group full-width" style={{marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '15px'}}>
+                   <h4 style={{fontSize: '0.9rem', marginBottom: '10px', color: 'var(--text-dim)'}}>Bank Details (For Withdrawals)</h4>
+                </div>
+
+                <div className="form-group">
+                  <label>Bank Name</label>
+                  <input name="bankName" value={form.bankName} onChange={handleChange} placeholder="e.g. HDFC Bank" />
+                </div>
+                <div className="form-group">
+                  <label>Account Number</label>
+                  <input name="accountNumber" value={form.accountNumber} onChange={handleChange} placeholder="Account Number" />
+                </div>
+                <div className="form-group">
+                  <label>IFSC Code</label>
+                  <input name="ifscCode" value={form.ifscCode} onChange={handleChange} placeholder="IFSC Code" />
+                </div>
+                <div className="form-group">
+                  <label>Account Holder</label>
+                  <input name="accountHolderName" value={form.accountHolderName} onChange={handleChange} placeholder="Full Name" />
                 </div>
               </div>
               {saveMsg && <div className="form-feedback">{saveMsg}</div>}

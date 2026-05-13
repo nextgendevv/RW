@@ -10,7 +10,11 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
 import DepositManagement from './pages/admin/DepositManagement';
 import CommissionManagement from './pages/admin/CommissionManagement';
+import PackageManagement from './pages/admin/PackageManagement';
+import WithdrawalManagement from './pages/admin/WithdrawalManagement';
+import AdminSupport from './pages/admin/AdminSupport';
 import AdminLoginPage from './pages/admin/AdminLoginPage';
+import SupportPage from './pages/SupportPage';
 import HomePage from './pages/HomePage';
 import './App.css';
 import ProtectedLayout from './layouts/ProtectedLayout';
@@ -80,7 +84,11 @@ export default function App() {
             <Route path="users" element={<UserManagement />} />
             <Route path="deposits" element={<DepositManagement />} />
             <Route path="commissions" element={<CommissionManagement />} />
+            <Route path="packages" element={<PackageManagement />} />
+            <Route path="withdrawals" element={<WithdrawalManagement />} />
+            <Route path="support" element={<AdminSupport />} />
           </Route>
+          <Route path="/support" element={<SupportPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

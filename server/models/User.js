@@ -12,7 +12,12 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   subscription: { type: Boolean, default: false },
   subscriptionPlan: { type: String, enum: ['none', '1_month', '1_year', '5_years'], default: 'none' },
-  walletBalance: { type: Number, default: 0 },
+  walletBalance: { type: Number, default: 0 }, // For deposits & subscriptions
+  mainWalletBalance: { type: Number, default: 0 }, // For commissions & profit (withdrawable)
+  bankName: { type: String },
+  accountNumber: { type: String },
+  ifscCode: { type: String },
+  accountHolderName: { type: String },
 }, { timestamps: true });
 
 // Generate a random 8-character referral code

@@ -11,7 +11,8 @@ import {
   ArrowDownCircle, 
   Clock, 
   XCircle,
-  ChevronRight
+  ChevronRight,
+  HelpCircle
 } from '../components/Icons';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../api';
@@ -20,6 +21,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState({
     walletBalance: 0,
+    mainBalance: 0,
     totalReferrals: 0,
     recentActivity: []
   });
@@ -29,14 +31,21 @@ export default function DashboardPage() {
     const fetchDashboardData = async () => {
       try {
         const [walletRes, teamsRes] = await Promise.all([
-          api.get('/wallet/deposits'),
+          api.get('/wallet/summary'),
           api.get('/teams')
         ]);
         
+        // Merge deposits and withdrawals for recent activity
+        const combinedActivity = [
+          ...walletRes.data.deposits.map(d => ({...d, type: 'deposit'})),
+          ...walletRes.data.withdrawals.map(w => ({...w, type: 'withdrawal'}))
+        ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
         setStats({
-          walletBalance: walletRes.data.balance || 0,
+          walletBalance: walletRes.data.depositBalance || 0,
+          mainBalance: walletRes.data.mainBalance || 0,
           totalReferrals: teamsRes.data.summary?.totalItems || 0,
-          recentActivity: walletRes.data.deposits.slice(0, 5) || []
+          recentActivity: combinedActivity.slice(0, 5) || []
         });
       } catch (err) {
         console.error('Failed to fetch dashboard data', err);
@@ -92,6 +101,17 @@ export default function DashboardPage() {
         </div>
 
         <div className="stat-card glass-card">
+          <div className="stat-icon" style={{background: 'rgba(29, 185, 84, 0.1)'}}>
+            <Wallet size={24} style={{color: '#1DB954'}} />
+          </div>
+          <div className="stat-info">
+            <span className="label">Main Wallet (Earnings)</span>
+            <span className="value" style={{color: '#1DB954'}}>₹{stats.mainBalance}</span>
+          </div>
+          <Link to="/profile" className="stat-link">Withdraw Funds</Link>
+        </div>
+
+        <div className="stat-card glass-card">
           <div className="stat-icon">
             <Star size={24} className="text-primary" />
           </div>
@@ -117,11 +137,13 @@ export default function DashboardPage() {
                     {act.status === 'approved' ? <ArrowDownCircle size={18} /> : act.status === 'pending' ? <Clock size={18} /> : <XCircle size={18} />}
                   </div>
                   <div className="activity-details">
-                    <span className="title">Deposit Request</span>
+                    <span className="title">{act.type === 'withdrawal' ? 'Withdrawal Request' : 'Deposit Request'}</span>
                     <span className="date">{new Date(act.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div className="activity-amount">
-                    <span className="value">₹{act.amount}</span>
+                    <span className="value" style={{color: act.type === 'withdrawal' ? '#ef4444' : '#1DB954'}}>
+                      {act.type === 'withdrawal' ? '-' : '+'}₹{act.amount}
+                    </span>
                     <span className={`status ${act.status}`}>{act.status}</span>
                   </div>
                 </div>
@@ -143,9 +165,9 @@ export default function DashboardPage() {
               <span className="icon"><Network size={28} /></span>
               <span>Network Tree</span>
             </Link>
-            <Link to="/profile" className="quick-link-item">
-              <span className="icon"><User size={28} /></span>
-              <span>Edit Profile</span>
+            <Link to="/support" className="quick-link-item">
+              <span className="icon"><HelpCircle size={28} /></span>
+              <span>Help & Support</span>
             </Link>
             <button className="quick-link-item" onClick={() => {
               const text = `Join me on Richway! ${window.location.origin}/auth?ref=${user.referralCode}`;

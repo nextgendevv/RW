@@ -58,6 +58,27 @@ export default function AdminSidebar({ isOpen, onClose }) {
         >
           Commission Management
         </NavLink>
+        <NavLink 
+          to="/admin/packages" 
+          className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+          onClick={handleLinkClick}
+        >
+          Package Management
+        </NavLink>
+        <NavLink 
+          to="/admin/withdrawals" 
+          className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+          onClick={handleLinkClick}
+        >
+          Withdrawal Approvals
+        </NavLink>
+        <NavLink 
+          to="/admin/support" 
+          className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+          onClick={handleLinkClick}
+        >
+          Support Tickets
+        </NavLink>
         <div className="nav-divider" />
         <NavLink 
           to="/dashboard" 

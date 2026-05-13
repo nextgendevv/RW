@@ -6,7 +6,8 @@ import {
   Settings, 
   LogOut, 
   X,
-  Leaf
+  Leaf,
+  HelpCircle
 } from '../components/Icons';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -64,6 +65,16 @@ export default function Sidebar({ isOpen, onClose }) {
           <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
             <Users size={18} />
             Teams
+          </div>
+        </NavLink>
+        <NavLink 
+          to="/support" 
+          className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+          onClick={handleLinkClick}
+        >
+          <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+            <HelpCircle size={18} />
+            Support
           </div>
         </NavLink>
         {user?.role === 'admin' && (
