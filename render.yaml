@@ -11,5 +11,9 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
+      - key: STREAMING_SITE_URL
+        sync: false
+      - key: STREAMING_API_SECRET
+        sync: false
       - key: PORT
         value: 3001

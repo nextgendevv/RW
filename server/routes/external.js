@@ -90,4 +90,44 @@ router.post('/verify-login', async (req, res) => {
   }
 });
 
+// @route   GET /api/external/debug-user
+// @desc    Debug endpoint for checking user subscription state
+// @access  Public (Secret verified)
+router.get('/debug-user', async (req, res) => {
+  try {
+    const { email, secret } = req.query;
+    const envSecret = (process.env.STREAMING_API_SECRET || '').trim().replace(/^['"](.+)['"]$/, '$1');
+
+    if (!secret || secret !== envSecret) {
+      return res.status(401).json({ message: 'Invalid partner secret' });
+    }
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    const user = await User.findOne({ email }).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      subscription: user.subscription,
+      subscriptionPlan: user.subscriptionPlan,
+      walletBalance: user.walletBalance,
+      referralCode: user.referralCode,
+      referredBy: user.referredBy,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    });
+  } catch (err) {
+    console.error('EXTERNAL_DEBUG_ERROR:', err);
+    res.status(500).json({ message: 'Server error during debug lookup' });
+  }
+});
+
 module.exports = router;
