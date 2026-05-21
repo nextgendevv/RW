@@ -10,7 +10,7 @@
     "client": "npm run dev --workspace=client",
     "server": "npm run dev --workspace=server",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "build": "npm run build --workspace=client && mkdir -p dist && cp -rv client/dist/* dist/",
+    "build": "npm run build --workspace=client && node -e \"const fs=require('fs'); const path=require('path'); const src=path.resolve('client/dist'); const dest=path.resolve('dist'); if(!fs.existsSync(dest)) fs.mkdirSync(dest,{recursive:true}); for(const name of fs.readdirSync(src)){ const s=path.join(src,name); const d=path.join(dest,name); const st=fs.statSync(s); if(st.isDirectory()){ fs.mkdirSync(d,{recursive:true}); for(const item of fs.readdirSync(s)){ fs.copyFileSync(path.join(s,item), path.join(d,item)); }} else { fs.copyFileSync(s,d); } }\"",
     "start": "node server/index.js"
   },
   "devDependencies": {
