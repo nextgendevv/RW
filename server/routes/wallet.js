@@ -41,6 +41,7 @@ router.get('/deposits', authMiddleware, async (req, res) => {
 });
 
 const Withdrawal = require('../models/Withdrawal');
+const Commission = require('../models/Commission');
 
 // @route   GET /api/wallet/summary
 // @desc    Get user's wallet balances and history
@@ -50,12 +51,16 @@ router.get('/summary', authMiddleware, async (req, res) => {
     const user = await User.findById(req.user.id).select('walletBalance mainWalletBalance bankName accountNumber ifscCode accountHolderName');
     const deposits = await Deposit.find({ user: req.user.id }).sort({ createdAt: -1 });
     const withdrawals = await Withdrawal.find({ user: req.user.id }).sort({ createdAt: -1 });
+    const commissions = await Commission.find({ recipient: req.user.id })
+      .populate('fromUser', 'firstName lastName email')
+      .sort({ createdAt: -1 });
     
     res.json({ 
       depositBalance: user.walletBalance || 0,
       mainBalance: user.mainWalletBalance || 0,
       deposits,
       withdrawals,
+      commissions,
       bankDetails: {
         bankName: user.bankName,
         accountNumber: user.accountNumber,

@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   User, 
+  Wallet,
   Users, 
   Settings, 
   LogOut, 
@@ -55,6 +56,16 @@ export default function Sidebar({ isOpen, onClose }) {
           <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
             <User size={18} />
             Profile
+          </div>
+        </NavLink>
+        <NavLink 
+          to="/transactions" 
+          className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+          onClick={handleLinkClick}
+        >
+          <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+            <Wallet size={18} />
+            Transactions
           </div>
         </NavLink>
         <NavLink 

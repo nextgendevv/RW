@@ -127,7 +127,7 @@ export default function DashboardPage() {
         <div className="glass-card activity-panel">
           <div className="panel-header">
             <h3>Recent Wallet Activity</h3>
-            <Link to="/profile">View All</Link>
+            <Link to="/transactions">View All</Link>
           </div>
           <div className="activity-list">
             {stats.recentActivity.length > 0 ? (
