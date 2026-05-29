@@ -64,7 +64,7 @@ router.post('/sync-access', authMiddleware, async (req, res) => {
 });
 
 // @route   POST /api/streaming/subscribe
-// @desc    Mock subscription purchase and distribute 10% commission
+// @desc    Mock subscription purchase and distribute commission based on plan configuration
 // @access  Private
 router.post('/subscribe', authMiddleware, async (req, res) => {
   try {
@@ -87,7 +87,11 @@ router.post('/subscribe', authMiddleware, async (req, res) => {
       });
     }
 
-    const commissionAmount = price * 0.10; // 10% share
+    // Get commission percentage from config (default to 10% if not configured)
+    const CommissionConfig = require('../models/CommissionConfig');
+    const commissionConfig = await CommissionConfig.findOne({ plan: plan });
+    const commissionPercentage = commissionConfig?.commissionPercentage || 10;
+    const commissionAmount = price * (commissionPercentage / 100);
 
     // Deduct price from user's wallet
     user.walletBalance = (user.walletBalance || 0) - price;

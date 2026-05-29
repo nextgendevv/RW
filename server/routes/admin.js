@@ -488,4 +488,118 @@ router.put('/support/tickets/:id/status', [auth, admin], async (req, res) => {
   }
 });
 
+// ============================================
+// COMMISSION CONFIGURATION ROUTES
+// ============================================
+
+// @route   GET /api/admin/commission-config
+// @desc    Get all commission configurations for plans
+// @access  Private/Admin
+router.get('/commission-config', [auth, admin], async (req, res) => {
+  try {
+    const CommissionConfig = require('../models/CommissionConfig');
+    const Package = require('../models/Package');
+    
+    const configs = await CommissionConfig.find().populate('updatedBy', 'firstName lastName email');
+    const packages = await Package.find();
+    
+    // Merge configs with current package prices
+    const enrichedConfigs = configs.map(config => {
+      const pkg = packages.find(p => p.key === config.plan);
+      return {
+        ...config.toObject(),
+        planPrice: pkg?.price || config.planPrice,
+        planName: pkg?.name || config.planName,
+        commissionAmount: pkg ? (pkg.price * config.commissionPercentage / 100) : 0
+      };
+    });
+    
+    res.json(enrichedConfigs);
+  } catch (err) {
+    console.error('ADMIN_GET_COMMISSION_CONFIG_ERROR:', err);
+    res.status(500).json({ message: 'Server error while fetching commission config.' });
+  }
+});
+
+// @route   POST /api/admin/commission-config
+// @desc    Create a new commission configuration
+// @access  Private/Admin
+router.post('/commission-config', [auth, admin], async (req, res) => {
+  try {
+    const { plan, commissionPercentage, planName } = req.body;
+    const CommissionConfig = require('../models/CommissionConfig');
+    const Package = require('../models/Package');
+    
+    // Check if config already exists for this plan
+    let existingConfig = await CommissionConfig.findOne({ plan });
+    if (existingConfig) {
+      return res.status(400).json({ message: 'Commission config already exists for this plan' });
+    }
+    
+    // Get package details
+    const pkg = await Package.findOne({ key: plan });
+    if (!pkg) {
+      return res.status(404).json({ message: 'Package not found' });
+    }
+    
+    const config = new CommissionConfig({
+      plan,
+      commissionPercentage,
+      planName: planName || pkg.name,
+      planPrice: pkg.price,
+      updatedBy: req.user.id
+    });
+    
+    await config.save();
+    res.json(config);
+  } catch (err) {
+    console.error('ADMIN_CREATE_COMMISSION_CONFIG_ERROR:', err);
+    res.status(500).json({ message: 'Server error while creating commission config.' });
+  }
+});
+
+// @route   PUT /api/admin/commission-config/:id
+// @desc    Update commission configuration
+// @access  Private/Admin
+router.put('/commission-config/:id', [auth, admin], async (req, res) => {
+  try {
+    const { commissionPercentage } = req.body;
+    const CommissionConfig = require('../models/CommissionConfig');
+    
+    const config = await CommissionConfig.findById(req.params.id);
+    if (!config) {
+      return res.status(404).json({ message: 'Commission config not found' });
+    }
+    
+    if (commissionPercentage !== undefined) {
+      if (commissionPercentage < 0 || commissionPercentage > 100) {
+        return res.status(400).json({ message: 'Commission percentage must be between 0 and 100' });
+      }
+      config.commissionPercentage = commissionPercentage;
+    }
+    
+    config.updatedBy = req.user.id;
+    await config.save();
+    
+    res.json(config);
+  } catch (err) {
+    console.error('ADMIN_UPDATE_COMMISSION_CONFIG_ERROR:', err);
+    res.status(500).json({ message: 'Server error while updating commission config.' });
+  }
+});
+
+// @route   DELETE /api/admin/commission-config/:id
+// @desc    Delete commission configuration
+// @access  Private/Admin
+router.delete('/commission-config/:id', [auth, admin], async (req, res) => {
+  try {
+    const CommissionConfig = require('../models/CommissionConfig');
+    await CommissionConfig.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Commission config deleted successfully' });
+  } catch (err) {
+    console.error('ADMIN_DELETE_COMMISSION_CONFIG_ERROR:', err);
+    res.status(500).json({ message: 'Server error while deleting commission config.' });
+  }
+});
+
 module.exports = router;

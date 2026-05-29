@@ -59,6 +59,13 @@ export default function AdminSidebar({ isOpen, onClose }) {
           Commission Management
         </NavLink>
         <NavLink 
+          to="/admin/commission-config" 
+          className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+          onClick={handleLinkClick}
+        >
+          Commission Settings
+        </NavLink>
+        <NavLink 
           to="/admin/packages" 
           className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
           onClick={handleLinkClick}

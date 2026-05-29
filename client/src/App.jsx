@@ -11,6 +11,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
 import DepositManagement from './pages/admin/DepositManagement';
 import CommissionManagement from './pages/admin/CommissionManagement';
+import CommissionSettings from './pages/admin/CommissionSettings';
 import PackageManagement from './pages/admin/PackageManagement';
 import WithdrawalManagement from './pages/admin/WithdrawalManagement';
 import AdminSupport from './pages/admin/AdminSupport';
@@ -86,6 +87,7 @@ export default function App() {
             <Route path="users" element={<UserManagement />} />
             <Route path="deposits" element={<DepositManagement />} />
             <Route path="commissions" element={<CommissionManagement />} />
+            <Route path="commission-config" element={<CommissionSettings />} />
             <Route path="packages" element={<PackageManagement />} />
             <Route path="withdrawals" element={<WithdrawalManagement />} />
             <Route path="support" element={<AdminSupport />} />
